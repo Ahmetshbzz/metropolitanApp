@@ -6,7 +6,7 @@ import * as schema from './schema';
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres123@localhost:5432/metropolitan_db';
 
 // Disable prefetch as it is not supported for "Transaction" pool mode
-const client = postgres(connectionString, { 
+const client = postgres(connectionString, {
   prepare: false,
   max: 10,
   idle_timeout: 20,
