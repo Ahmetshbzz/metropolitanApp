@@ -1,0 +1,106 @@
+{
+      "folders": [
+      {
+        "name": "Workspace Root",
+        "path": "."
+      },
+      {
+        "name": "Backend",
+        "path": "./apps/backend"
+      },
+      {
+        "name": "Admin",
+        "path": "./apps/admin"
+      },
+      {
+        "name": "Mobile App",
+        "path": "./apps/mobile-app"
+      }
+    ],
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "auto",
+    "typescript.suggest.autoImports": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/bun.lockb": true,
+      "**/.git": false
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/bun.lockb": true
+    },
+    "eslint.workingDirectories": [
+      "apps/mobile-app",
+      "apps/backend"
+    ],
+    "typescript.preferences.includePackageJsonAutoImports": "auto"
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.vscode-typescript-next",
+      "bradlc.vscode-tailwindcss",
+      "ms-vscode.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "ms-vscode.vscode-json",
+      "oven.bun-vscode"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Install All Dependencies",
+        "type": "shell",
+        "command": "bun install",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        }
+      },
+      {
+        "label": "Start Backend Dev",
+        "type": "shell",
+        "command": "bun run backend:dev",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        }
+      },
+      {
+        "label": "Start Mobile App",
+        "type": "shell",
+        "command": "bun run mobile:start",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        }
+      },
+      {
+        "label": "Start Admin Dev",
+        "type": "shell",
+        "command": "bun run admin:dev",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "metropolitan-app-workspace",
+  "version": "1.0.0",
+  "description": "Metropolitan App Workspace with Mobile App and Backend",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/backend",
+      "apps/admin"
+    ]
+  },
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "build": "bun run --filter '*' build",
+    "start": "bun run --filter '*' start",
+    "backend:dev": "bun run --filter backend dev",
+    "backend:start": "bun run --filter backend start",
+    "admin:dev": "bun run --filter admin dev",
+    "admin:build": "bun run --filter admin build",
+    "admin:start": "bun run --filter admin start",
+    "mobile:start": "cd apps/mobile-app && bun run start",
+    "mobile:android": "cd apps/mobile-app && bun run android",
+    "mobile:ios": "cd apps/mobile-app && bun run ios",
+    "mobile:install": "cd apps/mobile-app && bun install",
+    "install-all": "bun install && cd apps/mobile-app && bun install",
+    "clean": "bun run --filter '*' clean && cd apps/mobile-app && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}
