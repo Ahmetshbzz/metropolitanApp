@@ -5,8 +5,8 @@
  * @format
  */
 
-import React, { useState } from 'react';
-import { StatusBar, Text, useColorScheme, View, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StatusBar, Text, useColorScheme, View, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Image, Animated } from 'react-native';
 import {
   SafeAreaProvider,
   SafeAreaView,
@@ -18,6 +18,68 @@ function App() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [showSplash, setShowSplash] = useState(true);
+  
+  // Animasyon değerleri
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const splashFadeAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Logo animasyonu başlat
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // 2.5 saniye sonra fade out başlat
+    const timer = setTimeout(() => {
+      Animated.timing(splashFadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start(() => {
+        setShowSplash(false);
+      });
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [fadeAnim, scaleAnim, splashFadeAnim]);
+
+  // Splash screen göster
+  if (showSplash) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar barStyle="dark-content" />
+        <Animated.View 
+          className="flex-1 bg-white justify-center items-center"
+          style={{ opacity: splashFadeAnim }}
+        >
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }],
+            }}
+          >
+            <Image 
+              source={require('./assets/splash_logo.png')} 
+              className="w-36 h-36"
+              resizeMode="contain"
+            />
+          </Animated.View>
+        </Animated.View>
+      </SafeAreaProvider>
+    );
+  }
 
   const handleSubmit = () => {
     // Basit doğrulama

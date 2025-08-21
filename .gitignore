@@ -1,1 +1,21 @@
 node_modules
+
+# Firebase credentials
+firebase/*.json
+firebase/*.p8
+firebase/*.plist
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# IDE files
+.DS_Store
+.vscode/
+.idea/
+
+# Build files
+build/
+dist/
+*.log
