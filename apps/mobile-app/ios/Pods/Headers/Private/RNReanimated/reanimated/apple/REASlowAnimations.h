@@ -1,8 +1,1 @@
-#import <Foundation/Foundation.h>
-
-namespace reanimated {
-
-CGFloat getUIAnimationDragCoefficient(void);
-CFTimeInterval calculateTimestampWithSlowAnimations(CFTimeInterval currentTimestamp);
-
-} // namespace reanimated
+../../../../../../../node_modules/react-native-reanimated/apple/reanimated/apple/REASlowAnimations.h

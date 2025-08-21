@@ -1,6 +1,1 @@
-module jsinspector_modern_network {
-  umbrella header "React-jsinspectornetwork-umbrella.h"
-
-  export *
-  module * { export * }
-}
+../../../Target Support Files/React-jsinspectornetwork/React-jsinspectornetwork.modulemap
