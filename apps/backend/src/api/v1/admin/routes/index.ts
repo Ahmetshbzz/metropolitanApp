@@ -1,7 +1,7 @@
 import { Elysia } from 'elysia';
 import { requireAdminAuth } from '../../../middleware/auth';
-import { apiResponse } from '../../../middleware/versioning';
 import { keyManager } from '../../../middleware/keys';
+import { apiResponse } from '../../../middleware/versioning';
 
 // Admin API routes - admin only
 export const adminRoutes = new Elysia({ prefix: '/admin' })
@@ -15,11 +15,11 @@ export const adminRoutes = new Elysia({ prefix: '/admin' })
   .get('/ping', requireAdminAuth, () => {
     return apiResponse({ pong: true, timestamp: Date.now() });
   })
-  
+
   // API Key Management - Admin Only
   .post('/keys/generate', requireAdminAuth, async ({ body }: any) => {
     const { name, clientType } = body;
-    
+
     if (!name || !clientType) {
       return apiResponse(
         { error: 'name and clientType are required' },
@@ -35,7 +35,7 @@ export const adminRoutes = new Elysia({ prefix: '/admin' })
     }
 
     const newKey = keyManager.generatePublicKey(name, clientType);
-    
+
     return apiResponse({
       message: 'API key generated successfully',
       key: {
@@ -48,7 +48,7 @@ export const adminRoutes = new Elysia({ prefix: '/admin' })
       }
     });
   })
-  
+
   .get('/keys/list', requireAdminAuth, () => {
     const keys = keyManager.listKeys();
     return apiResponse({
@@ -64,11 +64,11 @@ export const adminRoutes = new Elysia({ prefix: '/admin' })
       }))
     });
   })
-  
+
   .delete('/keys/:keyId/revoke', requireAdminAuth, ({ params }: any) => {
     const keys = keyManager.listKeys();
     const targetKey = keys.find(k => k.id === params.keyId);
-    
+
     if (!targetKey) {
       return apiResponse(
         { error: 'API key not found' },
@@ -77,7 +77,7 @@ export const adminRoutes = new Elysia({ prefix: '/admin' })
     }
 
     const revoked = keyManager.revokeKey(targetKey.key);
-    
+
     return apiResponse({
       message: revoked ? 'API key revoked successfully' : 'Failed to revoke key',
       keyId: params.keyId

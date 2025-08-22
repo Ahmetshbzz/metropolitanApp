@@ -15,7 +15,7 @@ class KeyManager {
   generatePublicKey(name: string, clientType: 'individual' | 'corporate'): PublicApiKey {
     const keyId = this.generateId();
     const apiKey = `pk_${clientType}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    
+
     const publicKey: PublicApiKey = {
       id: keyId,
       key: apiKey,
@@ -28,7 +28,7 @@ class KeyManager {
 
     this.keys.set(apiKey, publicKey);
     console.log(`🔑 Public API key generated: ${name} (${clientType})`);
-    
+
     return publicKey;
   }
 

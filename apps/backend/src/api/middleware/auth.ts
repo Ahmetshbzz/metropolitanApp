@@ -1,9 +1,9 @@
 import type { Context } from 'elysia';
-import { validateAdminSecret, keyManager, type PublicApiKey } from './keys';
+import { keyManager, validateAdminSecret, type PublicApiKey } from './keys';
 
 export enum UserType {
   INDIVIDUAL = 'individual',
-  CORPORATE = 'corporate', 
+  CORPORATE = 'corporate',
   ADMIN = 'admin'
 }
 
@@ -19,7 +19,7 @@ export interface AuthUser {
 export const authMiddleware = (allowedTypes: UserType[]) => {
   return async (ctx: Context) => {
     const authHeader = ctx.headers.authorization;
-    
+
     if (!authHeader) {
       ctx.set.status = 401;
       return { error: 'Authentication required' };
@@ -49,7 +49,7 @@ export const authMiddleware = (allowedTypes: UserType[]) => {
     const publicKey = keyManager.validatePublicKey(token);
     if (publicKey) {
       const userType = publicKey.clientType === 'individual' ? UserType.INDIVIDUAL : UserType.CORPORATE;
-      
+
       const clientUser: AuthUser = {
         id: `client_${publicKey.id}`,
         type: userType,
