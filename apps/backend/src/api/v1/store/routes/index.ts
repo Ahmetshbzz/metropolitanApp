@@ -1,9 +1,10 @@
 import { Elysia } from 'elysia';
+import { requireAdminAuth } from '../../../middleware/auth';
 import { apiResponse } from '../../../middleware/versioning';
 
 // Store API routes - client facing (bireysel + kurumsal)
 export const storeRoutes = new Elysia({ prefix: '/store' })
-  .get('/health', () => {
+  .get('/health', requireAdminAuth, () => {
     return apiResponse({
       status: 'healthy',
       service: 'store-api',

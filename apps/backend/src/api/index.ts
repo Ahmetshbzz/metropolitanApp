@@ -2,6 +2,7 @@ import { swagger } from '@elysiajs/swagger';
 import { Elysia } from 'elysia';
 import { adminGraphQL, storeGraphQL } from './graphql';
 import { apiResponse, getApiVersion } from './middleware/versioning';
+import { requireAdminAuth } from './middleware/auth';
 import { apiV1 } from './v1';
 
 // Main API router combining REST and GraphQL
@@ -19,7 +20,7 @@ export const api = new Elysia()
       ]
     }
   }))
-  .get('/health', () => {
+  .get('/health', requireAdminAuth, () => {
     return apiResponse({
       status: 'healthy',
       apis: {
