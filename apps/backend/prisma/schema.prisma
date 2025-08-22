@@ -1,0 +1,342 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserType {
+  individual
+  corporate
+}
+
+enum AuthProvider {
+  phone_otp
+  apple
+  google
+  facebook
+  auth0_database
+}
+
+enum AuditLogType {
+  // Authentication events
+  s
+  slo
+  f
+  fp
+  fc
+  fce
+  fco
+  fcp
+  fcpn
+  fcpr
+  fcpro
+  // OTP events  
+  fepotpft
+  seacft
+  sepft
+  scp
+  scpn
+  pwd_leak
+  // API events
+  api_limit
+  limit_wc
+  limit_ui
+  limit_mu
+  // Admin events
+  w
+  du
+  fu
+  pla
+  cls
+  cs
+  sce
+  ss
+  fs
+  fsa
+  admin_update_launch
+  // Management API
+  sapi
+  fapi
+  mgmt_api_read
+  mgmt_api_write
+}
+
+// Main users table
+model User {
+  id       String   @id @default(uuid())
+  userType UserType @map("user_type")
+
+  // Contact info
+  phone String @db.VarChar(20)
+  email String? @unique @db.VarChar(255)
+
+  // Profile
+  firstName String? @map("first_name") @db.VarChar(100)
+  lastName  String? @map("last_name") @db.VarChar(100)
+
+  // Corporate specific
+  companyName String? @map("company_name") @db.VarChar(255)
+  taxNumber   String? @map("tax_number") @db.VarChar(50)
+  nip         String? @unique @db.VarChar(20)
+
+  // Address
+  address    String? @db.VarChar(500)
+  city       String? @db.VarChar(100)
+  postalCode String? @map("postal_code") @db.VarChar(20)
+  country    String? @default("Poland") @db.VarChar(100)
+
+  // Corporate validation
+  isCompanyVerified Boolean? @default(false) @map("is_company_verified")
+  companyStatus     String?  @map("company_status") @db.VarChar(50)
+
+  // Status
+  isActive        Boolean   @default(true) @map("is_active")
+  isPhoneVerified Boolean   @default(false) @map("is_phone_verified")
+  isEmailVerified Boolean   @default(false) @map("is_email_verified")
+
+  // Timestamps
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  lastLoginAt DateTime? @map("last_login_at")
+
+  // Relations
+  authProviders AuthProviderRecord[]
+  userSessions  UserSession[]
+
+  @@unique([phone, userType], map: "users_phone_usertype_unique")
+  @@index([phone], map: "users_phone_idx")
+  @@index([email], map: "users_email_idx")
+  @@index([userType], map: "users_type_idx")
+  @@index([nip], map: "users_nip_idx")
+  @@index([phone, userType], map: "users_phone_usertype_idx")
+  @@map("users")
+}
+
+// Auth providers - Auth0 connection
+model AuthProviderRecord {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+
+  // Auth0 info
+  auth0UserId String       @unique @map("auth0_user_id") @db.VarChar(100)
+  provider    AuthProvider
+
+  // Provider specific data
+  providerData String? @map("provider_data")
+
+  // Status
+  isActive Boolean @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([auth0UserId], map: "auth_providers_auth0_user_idx")
+  @@index([userId, provider], map: "auth_providers_user_provider_idx")
+  @@map("auth_providers")
+}
+
+// Active sessions tracking
+model UserSession {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+
+  // Session info
+  sessionToken String  @unique @map("session_token") @db.VarChar(500)
+  refreshToken String? @map("refresh_token") @db.VarChar(500)
+
+  // Device/Client info
+  deviceId  String? @map("device_id") @db.VarChar(255)
+  userAgent String? @map("user_agent")
+  ipAddress String? @map("ip_address") @db.VarChar(45)
+
+  // Expiration
+  expiresAt DateTime @map("expires_at")
+
+  // Status
+  isActive Boolean @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastUsedAt DateTime @default(now()) @map("last_used_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionToken], map: "user_sessions_token_idx")
+  @@index([userId], map: "user_sessions_user_id_idx")
+  @@index([expiresAt], map: "user_sessions_expires_idx")
+  @@map("user_sessions")
+}
+
+// OTP codes for phone verification
+model OtpCode {
+  id    String @id @default(uuid())
+  phone String @db.VarChar(20)
+  code  String @db.VarChar(10)
+
+  // Purpose
+  purpose String @db.VarChar(50)
+
+  // Status
+  isUsed   Boolean @default(false) @map("is_used")
+  attempts String  @default("0") @db.VarChar(10)
+
+  // Expiration
+  expiresAt DateTime @map("expires_at")
+
+  // Timestamps
+  createdAt DateTime  @default(now()) @map("created_at")
+  usedAt    DateTime? @map("used_at")
+
+  @@index([phone], map: "otp_codes_phone_idx")
+  @@index([code], map: "otp_codes_code_idx")
+  @@index([expiresAt], map: "otp_codes_expires_idx")
+  @@map("otp_codes")
+}
+
+// Products table
+model Product {
+  id          String  @id @default(uuid())
+  name        String  @db.VarChar(255)
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("products")
+}
+
+// Audit logs table
+model AuditLog {
+  id          String       @id @default(uuid())
+  logId       String       @unique @map("log_id") @db.VarChar(100)
+  date        DateTime
+  type        AuditLogType
+  description String
+
+  // Connection info
+  connection   String? @db.VarChar(100)
+  connectionId String? @map("connection_id") @db.VarChar(100)
+
+  // Client info
+  clientId   String? @map("client_id") @db.VarChar(100)
+  clientName String? @map("client_name") @db.VarChar(255)
+
+  // Network info
+  ip        String  @db.VarChar(45)
+  clientIp  String? @map("client_ip") @db.VarChar(45)
+  userAgent String? @map("user_agent")
+  hostname  String? @db.VarChar(255)
+
+  // Security context (JA3/JA4 fingerprints)
+  securityContext Json? @map("security_context")
+
+  // User info
+  userId   String? @map("user_id") @db.VarChar(100)
+  userName String? @map("user_name") @db.VarChar(255)
+
+  // OAuth/API info
+  audience String? @db.VarChar(255)
+  scope    String?
+
+  // Location data
+  locationInfo Json? @map("location_info")
+
+  // Analysis flags
+  isSuspicious String @default("false") @map("is_suspicious") @db.VarChar(10)
+  riskScore    String @default("0") @map("risk_score") @db.VarChar(10)
+
+  // Metadata
+  createdAt   DateTime  @default(now()) @map("created_at")
+  processedAt DateTime? @map("processed_at")
+
+  @@index([date], map: "audit_logs_date_idx")
+  @@index([type], map: "audit_logs_type_idx")
+  @@index([ip], map: "audit_logs_ip_idx")
+  @@index([userId], map: "audit_logs_user_id_idx")
+  @@index([clientId], map: "audit_logs_client_id_idx")
+  @@index([logId], map: "audit_logs_log_id_idx")
+  @@index([date, type], map: "audit_logs_date_type_idx")
+  @@index([userId, date], map: "audit_logs_user_date_idx")
+  @@index([ip, date], map: "audit_logs_ip_date_idx")
+  @@map("audit_logs")
+}
+
+// IP analysis summary table
+model IpAnalysis {
+  id   String @id @default(uuid())
+  ip   String @unique @db.VarChar(45)
+
+  // Counters
+  totalRequests    String @default("0") @map("total_requests") @db.VarChar(20)
+  failedAttempts   String @default("0") @map("failed_attempts") @db.VarChar(20)
+  successfulLogins String @default("0") @map("successful_logins") @db.VarChar(20)
+
+  // Risk assessment
+  riskLevel String  @default("low") @map("risk_level") @db.VarChar(20)
+  isBlocked String  @default("false") @map("is_blocked") @db.VarChar(10)
+
+  // Time tracking
+  firstSeen    DateTime @map("first_seen")
+  lastSeen     DateTime @map("last_seen")
+  lastActivity DateTime @map("last_activity")
+
+  // Location data
+  lastCountry String? @map("last_country") @db.VarChar(100)
+  lastCity    String? @map("last_city") @db.VarChar(100)
+
+  // Metadata
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([ip], map: "ip_analysis_ip_idx")
+  @@index([riskLevel], map: "ip_analysis_risk_level_idx")
+  @@index([lastSeen], map: "ip_analysis_last_seen_idx")
+  @@map("ip_analysis")
+}
+
+// User behavior analysis table
+model UserBehaviorAnalysis {
+  id     String @id @default(uuid())
+  userId String @unique @map("user_id") @db.VarChar(100)
+
+  // Login patterns
+  totalLogins          String @default("0") @map("total_logins") @db.VarChar(20)
+  failedLoginAttempts  String @default("0") @map("failed_login_attempts") @db.VarChar(20)
+
+  // Device patterns
+  uniqueDevices String @default("0") @map("unique_devices") @db.VarChar(10)
+  uniqueIps     String @default("0") @map("unique_ips") @db.VarChar(10)
+
+  // Time patterns
+  firstLogin           DateTime? @map("first_login")
+  lastLogin            DateTime? @map("last_login")
+  avgSessionDuration   String    @default("0") @map("avg_session_duration") @db.VarChar(20)
+
+  // Risk indicators
+  suspiciousActivityCount String @default("0") @map("suspicious_activity_count") @db.VarChar(10)
+  riskScore               String @default("0") @map("risk_score") @db.VarChar(10)
+
+  // Metadata
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([userId], map: "user_behavior_user_id_idx")
+  @@index([lastLogin], map: "user_behavior_last_login_idx")
+  @@index([riskScore], map: "user_behavior_risk_score_idx")
+  @@map("user_behavior_analysis")
+}

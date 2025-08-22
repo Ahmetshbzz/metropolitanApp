@@ -33,5 +33,4 @@ export function initAuditLogsModule(): void {
   // console.log('📋 Audit Logs module initialized');
 }
 
-// Export database schema for migrations
-export * from '../../db/schema/audit-logs';
+// Database schema is now handled by Prisma

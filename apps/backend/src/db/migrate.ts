@@ -1,18 +1,31 @@
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import { client, db } from './connection';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { prisma } from './connection';
+
+const execAsync = promisify(exec);
 
 async function runMigrations(): Promise<void> {
-  // console.log('🔄 Running database migrations...');
+  console.log('🔄 Running Prisma database migrations...');
 
   try {
-    await migrate(db, { migrationsFolder: './src/db/migrations' });
-    // console.log('✅ Database migrations completed successfully');
+    // Generate Prisma client
+    console.log('📦 Generating Prisma client...');
+    await execAsync('bun prisma generate');
+    
+    // Deploy migrations
+    console.log('🚀 Deploying migrations...');
+    await execAsync('bun prisma migrate deploy');
+    
+    console.log('✅ Database migrations completed successfully');
   } catch (error) {
     console.error('❌ Migration failed:', error);
     process.exit(1);
   } finally {
-    await client.end();
+    await prisma.$disconnect();
   }
 }
 
-void runMigrations();
+// Only run migrations if this file is executed directly
+if (import.meta.main) {
+  void runMigrations();
+}

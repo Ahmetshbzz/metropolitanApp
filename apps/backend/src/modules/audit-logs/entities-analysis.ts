@@ -1,35 +1,30 @@
-import { eq, sql } from 'drizzle-orm';
-import { db } from '../../db/connection';
-import { 
-  ipAnalysis, 
-  userBehaviorAnalysis,
-  type IpAnalysis,
-  type NewIpAnalysis,
-  type UserBehaviorAnalysis,
-  type NewUserBehaviorAnalysis
-} from '../../db/schema/audit-logs';
-import { RiskLevel } from './types';
+import { prisma } from '../../db/connection';
+import type { IpAnalysis, UserBehaviorAnalysis } from '../../generated/prisma';
+import { RiskLevel, type IpAnalysisSummary } from './types';
 
 export class IpAnalysisEntity {
-  static async findByIp(ip: string): Promise<IpAnalysis | undefined> {
-    const [analysis] = await db.select().from(ipAnalysis).where(eq(ipAnalysis.ip, ip));
+  static async findByIp(ip: string): Promise<IpAnalysis | null> {
+    const analysis = await prisma.ipAnalysis.findUnique({
+      where: { ip }
+    });
     return analysis;
   }
 
-  static async create(data: NewIpAnalysis): Promise<IpAnalysis> {
-    const [analysis] = await db.insert(ipAnalysis).values(data).returning();
+  static async create(data: Omit<IpAnalysis, 'id' | 'createdAt' | 'updatedAt'>): Promise<IpAnalysis> {
+    const analysis = await prisma.ipAnalysis.create({
+      data
+    });
     return analysis;
   }
 
-  static async updateOrCreate(ip: string, updateData: Partial<NewIpAnalysis>): Promise<IpAnalysis> {
+  static async updateOrCreate(ip: string, updateData: Partial<Omit<IpAnalysis, 'id' | 'ip' | 'createdAt' | 'updatedAt'>>): Promise<IpAnalysis> {
     const existing = await this.findByIp(ip);
     
     if (existing) {
-      const [updated] = await db
-        .update(ipAnalysis)
-        .set({ ...updateData, updatedAt: new Date() })
-        .where(eq(ipAnalysis.ip, ip))
-        .returning();
+      const updated = await prisma.ipAnalysis.update({
+        where: { ip },
+        data: { ...updateData, updatedAt: new Date() }
+      });
       return updated;
     } else {
       return await this.create({
@@ -38,7 +33,7 @@ export class IpAnalysisEntity {
         lastSeen: new Date(),
         lastActivity: new Date(),
         ...updateData
-      } as NewIpAnalysis);
+      } as Omit<IpAnalysis, 'id' | 'createdAt' | 'updatedAt'>);
     }
   }
 
@@ -58,106 +53,107 @@ export class IpAnalysisEntity {
       return;
     }
 
-    await db
-      .update(ipAnalysis)
-      .set({
-        totalRequests: sql`${ipAnalysis.totalRequests}::int + 1`,
-        failedAttempts: failed ? sql`${ipAnalysis.failedAttempts}::int + 1` : ipAnalysis.failedAttempts,
-        successfulLogins: success ? sql`${ipAnalysis.successfulLogins}::int + 1` : ipAnalysis.successfulLogins,
-        lastSeen: new Date(),
-        lastActivity: new Date(),
-        updatedAt: new Date()
-      })
-      .where(eq(ipAnalysis.ip, ip));
+    // Use raw query for atomic incrementing
+    await prisma.$executeRaw`
+      UPDATE ip_analysis 
+      SET 
+        total_requests = (total_requests::int + 1)::text,
+        failed_attempts = CASE WHEN ${failed} THEN (failed_attempts::int + 1)::text ELSE failed_attempts END,
+        successful_logins = CASE WHEN ${success} THEN (successful_logins::int + 1)::text ELSE successful_logins END,
+        last_seen = ${new Date()},
+        last_activity = ${new Date()},
+        updated_at = ${new Date()}
+      WHERE ip = ${ip}
+    `;
   }
 
   static async updateRiskLevel(ip: string, riskLevel: RiskLevel): Promise<void> {
-    await db
-      .update(ipAnalysis)
-      .set({ 
+    await prisma.ipAnalysis.update({
+      where: { ip },
+      data: { 
         riskLevel,
         updatedAt: new Date() 
-      })
-      .where(eq(ipAnalysis.ip, ip));
+      }
+    });
   }
 
   static async blockIp(ip: string): Promise<void> {
-    await db
-      .update(ipAnalysis)
-      .set({ 
+    await prisma.ipAnalysis.update({
+      where: { ip },
+      data: { 
         isBlocked: 'true',
         updatedAt: new Date() 
-      })
-      .where(eq(ipAnalysis.ip, ip));
+      }
+    });
   }
 
   static async findHighRiskIps(limit = 50): Promise<IpAnalysis[]> {
-    return await db
-      .select()
-      .from(ipAnalysis)
-      .where(eq(ipAnalysis.riskLevel, 'HIGH'))
-      .limit(limit);
+    return await prisma.ipAnalysis.findMany({
+      where: { riskLevel: 'high' },
+      take: limit
+    });
   }
 
   static async getIpSummary(ip: string): Promise<IpAnalysisSummary> {
-    const analysis = await db.select().from(ipAnalysis)
-      .where(eq(ipAnalysis.ip, ip))
-      .limit(1);
+    const analysis = await prisma.ipAnalysis.findUnique({
+      where: { ip }
+    });
     
-    if (analysis.length === 0) {
+    if (!analysis) {
       return {
         ip,
         totalRequests: 0,
         failedAttempts: 0,
         successfulLogins: 0,
-        riskLevel: 'LOW',
+        riskLevel: 'low',
         isBlocked: false,
         firstSeen: null,
         lastSeen: null
       };
     }
 
-    const record = analysis[0];
     return {
-      ip: record.ip,
-      totalRequests: parseInt(record.totalRequests ?? '0'),
-      failedAttempts: parseInt(record.failedAttempts ?? '0'), 
-      successfulLogins: parseInt(record.successfulLogins ?? '0'),
-      riskLevel: record.riskLevel ?? 'LOW',
-      isBlocked: record.isBlocked === 'true',
-      firstSeen: record.firstSeen,
-      lastSeen: record.lastSeen
+      ip: analysis.ip,
+      totalRequests: parseInt(analysis.totalRequests ?? '0'),
+      failedAttempts: parseInt(analysis.failedAttempts ?? '0'), 
+      successfulLogins: parseInt(analysis.successfulLogins ?? '0'),
+      riskLevel: analysis.riskLevel ?? 'low',
+      isBlocked: analysis.isBlocked === 'true',
+      firstSeen: analysis.firstSeen,
+      lastSeen: analysis.lastSeen
     };
   }
 }
 
 export class UserBehaviorEntity {
-  static async findByUserId(userId: string): Promise<UserBehaviorAnalysis | undefined> {
-    const [analysis] = await db.select().from(userBehaviorAnalysis)
-      .where(eq(userBehaviorAnalysis.userId, userId));
+  static async findByUserId(userId: string): Promise<UserBehaviorAnalysis | null> {
+    const analysis = await prisma.userBehaviorAnalysis.findUnique({
+      where: { userId }
+    });
     return analysis;
   }
 
-  static async create(data: NewUserBehaviorAnalysis): Promise<UserBehaviorAnalysis> {
-    const [analysis] = await db.insert(userBehaviorAnalysis).values(data).returning();
+  static async create(data: Omit<UserBehaviorAnalysis, 'id' | 'createdAt' | 'updatedAt'>): Promise<UserBehaviorAnalysis> {
+    const analysis = await prisma.userBehaviorAnalysis.create({
+      data
+    });
     return analysis;
   }
 
-  static async updateOrCreate(userId: string, updateData: Partial<NewUserBehaviorAnalysis>): Promise<UserBehaviorAnalysis> {
+  static async updateOrCreate(userId: string, updateData: Partial<Omit<UserBehaviorAnalysis, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>): Promise<UserBehaviorAnalysis> {
     const existing = await this.findByUserId(userId);
     
     if (existing) {
-      const [updated] = await db
-        .update(userBehaviorAnalysis)
-        .set({ ...updateData, updatedAt: new Date() })
-        .where(eq(userBehaviorAnalysis.userId, userId))
-        .returning();
+      const updated = await prisma.userBehaviorAnalysis.update({
+        where: { userId },
+        data: { ...updateData, updatedAt: new Date() }
+      });
       return updated;
     } else {
       return await this.create({
         userId,
         ...updateData
-      } as NewUserBehaviorAnalysis);
+      } as Omit<UserBehaviorAnalysis, 'id' | 'createdAt' | 'updatedAt'>);
     }
   }
 
@@ -170,39 +166,41 @@ export class UserBehaviorEntity {
         userId,
         totalLogins: failed ? '0' : '1',
         failedLoginAttempts: failed ? '1' : '0',
-        firstLogin: failed ? undefined : now,
-        lastLogin: failed ? undefined : now
+        firstLogin: failed ? null : now,
+        lastLogin: failed ? null : now
       });
       return;
     }
 
-    const updateData: Partial<NewUserBehaviorAnalysis> = {
-      updatedAt: now
-    };
-
+    // Use raw query for atomic incrementing
     if (failed) {
-      updateData.failedLoginAttempts = sql`${userBehaviorAnalysis.failedLoginAttempts}::int + 1`;
+      await prisma.$executeRaw`
+        UPDATE user_behavior_analysis 
+        SET 
+          failed_login_attempts = (failed_login_attempts::int + 1)::text,
+          updated_at = ${now}
+        WHERE user_id = ${userId}
+      `;
     } else {
-      updateData.totalLogins = sql`${userBehaviorAnalysis.totalLogins}::int + 1`;
-      updateData.lastLogin = now;
-      if (!existing.firstLogin) {
-        updateData.firstLogin = now;
-      }
+      await prisma.$executeRaw`
+        UPDATE user_behavior_analysis 
+        SET 
+          total_logins = (total_logins::int + 1)::text,
+          last_login = ${now},
+          first_login = COALESCE(first_login, ${now}),
+          updated_at = ${now}
+        WHERE user_id = ${userId}
+      `;
     }
-
-    await db
-      .update(userBehaviorAnalysis)
-      .set(updateData)
-      .where(eq(userBehaviorAnalysis.userId, userId));
   }
 
   static async updateRiskScore(userId: string, riskScore: number): Promise<void> {
-    await db
-      .update(userBehaviorAnalysis)
-      .set({ 
+    await prisma.userBehaviorAnalysis.update({
+      where: { userId },
+      data: { 
         riskScore: riskScore.toString(),
         updatedAt: new Date() 
-      })
-      .where(eq(userBehaviorAnalysis.userId, userId));
+      }
+    });
   }
 }

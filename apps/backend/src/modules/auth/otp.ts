@@ -1,6 +1,4 @@
-import { and, eq } from 'drizzle-orm';
-import { db } from '../../db/connection';
-import { otpCodes } from '../../db/schema/users';
+import { prisma } from '../../db/connection';
 import { publishPersistent } from '../../event-bus';
 import { auth0Service } from '../../services/auth0';
 
@@ -14,23 +12,23 @@ export class OTPService {
   }
 
   async verify(phone: string, code: string, purpose: 'registration' | 'login'): Promise<boolean> {
-    const [otp] = await db.select()
-      .from(otpCodes)
-      .where(and(
-        eq(otpCodes.phone, phone),
-        eq(otpCodes.code, code),
-        eq(otpCodes.purpose, purpose),
-        eq(otpCodes.isUsed, false)
-      ))
-      .limit(1);
+    const otp = await prisma.otpCode.findFirst({
+      where: {
+        phone,
+        code,
+        purpose,
+        isUsed: false
+      }
+    });
 
     if (!otp || new Date() > otp.expiresAt) {
       throw new Error('Invalid or expired OTP');
     }
 
-    await db.update(otpCodes)
-      .set({ isUsed: true, usedAt: new Date() })
-      .where(eq(otpCodes.id, otp.id));
+    await prisma.otpCode.update({
+      where: { id: otp.id },
+      data: { isUsed: true, usedAt: new Date() }
+    });
 
     await publishPersistent('auth.otp.verified', { phone });
     return true;

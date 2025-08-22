@@ -1,6 +1,4 @@
-import { and, eq } from 'drizzle-orm';
-import { db } from '../../db/connection';
-import { userSessions, users } from '../../db/schema/users';
+import { prisma } from '../../db/connection';
 import type { User, UserType } from './types';
 
 export class SessionService {
@@ -8,54 +6,59 @@ export class SessionService {
     const sessionToken = `sess_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
-    await db.insert(userSessions).values({
-      userId,
-      sessionToken,
-      expiresAt,
+    await prisma.userSession.create({
+      data: {
+        userId,
+        sessionToken,
+        expiresAt,
+      }
     });
 
     return sessionToken;
   }
 
   async validate(sessionToken: string): Promise<User | null> {
-    const [session] = await db.select()
-      .from(userSessions)
-      .innerJoin(users, eq(userSessions.userId, users.id))
-      .where(and(
-        eq(userSessions.sessionToken, sessionToken),
-        eq(userSessions.isActive, true)
-      ))
-      .limit(1);
+    const session = await prisma.userSession.findFirst({
+      where: {
+        sessionToken,
+        isActive: true
+      },
+      include: {
+        user: true
+      }
+    });
 
-    if (!session || new Date() > session.user_sessions.expiresAt) {
+    if (!session || new Date() > session.expiresAt) {
       return null;
     }
 
     // Update last used
-    await db.update(userSessions)
-      .set({ lastUsedAt: new Date() })
-      .where(eq(userSessions.sessionToken, sessionToken));
+    await prisma.userSession.update({
+      where: { id: session.id },
+      data: { lastUsedAt: new Date() }
+    });
 
     return {
-      id: session.users.id,
-      userType: session.users.userType as UserType,
-      phone: session.users.phone,
-      email: session.users.email ?? undefined,
-      firstName: session.users.firstName ?? undefined,
-      lastName: session.users.lastName ?? undefined,
-      companyName: session.users.companyName ?? undefined,
-      taxNumber: session.users.taxNumber ?? undefined,
-      isActive: session.users.isActive,
-      isPhoneVerified: session.users.isPhoneVerified,
-      isEmailVerified: session.users.isEmailVerified,
+      id: session.user.id,
+      userType: session.user.userType as UserType,
+      phone: session.user.phone,
+      email: session.user.email ?? undefined,
+      firstName: session.user.firstName ?? undefined,
+      lastName: session.user.lastName ?? undefined,
+      companyName: session.user.companyName ?? undefined,
+      taxNumber: session.user.taxNumber ?? undefined,
+      isActive: session.user.isActive,
+      isPhoneVerified: session.user.isPhoneVerified,
+      isEmailVerified: session.user.isEmailVerified,
       auth0UserId: ''
     };
   }
 
   async revoke(sessionToken: string): Promise<void> {
-    await db.update(userSessions)
-      .set({ isActive: false })
-      .where(eq(userSessions.sessionToken, sessionToken));
+    await prisma.userSession.updateMany({
+      where: { sessionToken },
+      data: { isActive: false }
+    });
   }
 }
 

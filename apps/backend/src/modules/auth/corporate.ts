@@ -1,6 +1,4 @@
-import { and, eq } from 'drizzle-orm';
-import { db } from '../../db/connection';
-import { users } from '../../db/schema/users';
+import { prisma } from '../../db/connection';
 import { publishPersistent } from '../../event-bus';
 import { auth0Service } from '../../services/auth0';
 import { gusService } from '../../services/gus';
@@ -10,10 +8,13 @@ import type { RegisterCorporateRequest, User, UserType } from './types';
 
 export class CorporateAuthService {
   async findByPhone(phone: string): Promise<User | null> {
-    const [user] = await db.select().from(users)
-      .where(and(eq(users.phone, phone), eq(users.userType, 'corporate')))
-      .limit(1);
-    return user ?? null;
+    const user = await prisma.user.findFirst({
+      where: {
+        phone,
+        userType: 'corporate'
+      }
+    });
+    return user as User | null;
   }
 
   async register(data: RegisterCorporateRequest): Promise<{ userId: string; requiresOTP: boolean }> {
@@ -23,22 +24,33 @@ export class CorporateAuthService {
     }
 
     // Check existing phone for CORPORATE users only
-    const existingCorporatePhone = await db.select().from(users)
-      .where(and(eq(users.phone, data.phone), eq(users.userType, 'corporate')))
-      .limit(1);
-    if (existingCorporatePhone.length > 0) {
+    const existingCorporatePhone = await prisma.user.findFirst({
+      where: {
+        phone: data.phone,
+        userType: 'corporate'
+      }
+    });
+    if (existingCorporatePhone) {
       throw new Error('Corporate phone number already registered');
     }
 
     // Check existing email
-    const existingEmail = await db.select().from(users).where(eq(users.email, data.email)).limit(1);
-    if (existingEmail.length > 0) {
+    const existingEmail = await prisma.user.findFirst({
+      where: {
+        email: data.email
+      }
+    });
+    if (existingEmail) {
       throw new Error('Email already registered');
     }
 
     // Check existing NIP - CRITICAL: One company = One account
-    const existingNIP = await db.select().from(users).where(eq(users.nip, data.nip)).limit(1);
-    if (existingNIP.length > 0) {
+    const existingNIP = await prisma.user.findFirst({
+      where: {
+        nip: data.nip
+      }
+    });
+    if (existingNIP) {
       throw new Error('This company (NIP) already has a registered account');
     }
 
@@ -58,23 +70,25 @@ export class CorporateAuthService {
     const companyData = gusValidation.company!;
 
     // Create local user with GUS-validated data (Auth0 only for SMS OTP)
-    const [newUser] = await db.insert(users).values({
-      userType: 'corporate',
-      phone: data.phone,
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      companyName: companyData.name,
-      nip: data.nip,
-      taxNumber: data.taxNumber, // Legacy field
-      address: companyData.address.street,
-      city: companyData.address.city,
-      postalCode: companyData.address.postalCode,
-      country: companyData.address.country,
-      isCompanyVerified: true, // GUS validation passed
-      companyStatus: companyData.status,
-      isPhoneVerified: false,
-    }).returning();
+    const newUser = await prisma.user.create({
+      data: {
+        userType: 'corporate',
+        phone: data.phone,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        companyName: companyData.name,
+        nip: data.nip,
+        taxNumber: data.taxNumber, // Legacy field
+        address: companyData.address.street,
+        city: companyData.address.city,
+        postalCode: companyData.address.postalCode,
+        country: companyData.address.country,
+        isCompanyVerified: true, // GUS validation passed
+        companyStatus: companyData.status,
+        isPhoneVerified: false,
+      }
+    });
 
     // No Auth0 user creation needed - only SMS OTP
 
@@ -94,9 +108,12 @@ export class CorporateAuthService {
 
   async login(phone: string, otp: string): Promise<{ user: User; sessionToken: string }> {
     // First check if corporate user exists locally
-    const [user] = await db.select().from(users)
-      .where(and(eq(users.phone, phone), eq(users.userType, 'corporate')))
-      .limit(1);
+    const user = await prisma.user.findFirst({
+      where: {
+        phone,
+        userType: 'corporate'
+      }
+    });
     
     if (!user) {
       throw new Error('Corporate user not found - please register first');
@@ -106,9 +123,10 @@ export class CorporateAuthService {
     await auth0Service.verifyPhoneOTP(phone, otp);
 
     // Update login time
-    await db.update(users)
-      .set({ lastLoginAt: new Date(), isPhoneVerified: true })
-      .where(eq(users.id, user.id));
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date(), isPhoneVerified: true }
+    });
 
     const sessionToken = await sessionService.create(user.id);
 
