@@ -15,6 +15,20 @@
       "when": 1755875886598,
       "tag": "0001_greedy_doctor_faustus",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1755876638712,
+      "tag": "0002_rare_toad",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1755876707877,
+      "tag": "0003_neat_marten_broadcloak",
+      "breakpoints": true
     }
   ]
 }

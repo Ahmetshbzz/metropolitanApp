@@ -1,4 +1,4 @@
-import { boolean, index, pgEnum, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, index, pgEnum, pgTable, text, timestamp, uuid, varchar, unique } from 'drizzle-orm/pg-core';
 
 // User type enum
 export const userTypeEnum = pgEnum('user_type', ['individual', 'corporate']);
@@ -18,7 +18,7 @@ export const users = pgTable('users', {
   userType: userTypeEnum('user_type').notNull(),
 
   // Contact info
-  phone: varchar('phone', { length: 20 }).unique().notNull(),
+  phone: varchar('phone', { length: 20 }).notNull(), // Removed .unique() - using composite
   email: varchar('email', { length: 255 }).unique(),
 
   // Profile
@@ -53,6 +53,12 @@ export const users = pgTable('users', {
   phoneIdx: index('users_phone_idx').on(table.phone),
   emailIdx: index('users_email_idx').on(table.email),
   userTypeIdx: index('users_type_idx').on(table.userType),
+  nipIdx: index('users_nip_idx').on(table.nip), // NIP için index
+  // Composite unique constraint: phone + userType (aynı telefon, farklı tip olabilir)
+  phoneUserTypeIdx: index('users_phone_usertype_idx').on(table.phone, table.userType),
+  // Unique constraints
+  phoneUserTypeUnique: unique('users_phone_usertype_unique').on(table.phone, table.userType),
+  nipUnique: unique('users_nip_unique').on(table.nip), // NIP must be unique
 }));
 
 // Auth providers - Auth0 bağlantısı için

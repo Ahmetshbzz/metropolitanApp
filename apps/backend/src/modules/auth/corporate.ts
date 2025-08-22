@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/connection';
 import { users } from '../../db/schema/users';
 import { publishPersistent } from '../../event-bus';
@@ -10,7 +10,9 @@ import type { RegisterCorporateRequest, User } from './types';
 
 export class CorporateAuthService {
   async findByPhone(phone: string): Promise<User | null> {
-    const [user] = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
+    const [user] = await db.select().from(users)
+      .where(and(eq(users.phone, phone), eq(users.userType, 'corporate')))
+      .limit(1);
     return user || null;
   }
 
@@ -20,16 +22,24 @@ export class CorporateAuthService {
       throw new Error('nip, firstName, lastName, and email are required for corporate registration');
     }
 
-    // Check existing phone
-    const existingPhone = await db.select().from(users).where(eq(users.phone, data.phone)).limit(1);
-    if (existingPhone.length > 0) {
-      throw new Error('Phone number already registered');
+    // Check existing phone for CORPORATE users only
+    const existingCorporatePhone = await db.select().from(users)
+      .where(and(eq(users.phone, data.phone), eq(users.userType, 'corporate')))
+      .limit(1);
+    if (existingCorporatePhone.length > 0) {
+      throw new Error('Corporate phone number already registered');
     }
 
     // Check existing email
     const existingEmail = await db.select().from(users).where(eq(users.email, data.email)).limit(1);
     if (existingEmail.length > 0) {
       throw new Error('Email already registered');
+    }
+
+    // Check existing NIP - CRITICAL: One company = One account
+    const existingNIP = await db.select().from(users).where(eq(users.nip, data.nip)).limit(1);
+    if (existingNIP.length > 0) {
+      throw new Error('This company (NIP) already has a registered account');
     }
 
     // Validate NIP with GUS API

@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/connection';
-import { authProviders, users } from '../../db/schema/users';
+import { users } from '../../db/schema/users';
 import { publishPersistent } from '../../event-bus';
 import { auth0Service } from '../../services/auth0';
 import { otpService } from './otp';
@@ -9,7 +9,9 @@ import type { AuthProvider, User } from './types';
 
 export class IndividualAuthService {
   async findByPhone(phone: string): Promise<User | null> {
-    const [user] = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
+    const [user] = await db.select().from(users)
+      .where(and(eq(users.phone, phone), eq(users.userType, 'individual')))
+      .limit(1);
     return user || null;
   }
 
@@ -19,10 +21,12 @@ export class IndividualAuthService {
       throw new Error('firstName, lastName, and email are required for individual registration');
     }
 
-    // Check existing phone
-    const existingPhone = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
-    if (existingPhone.length > 0) {
-      throw new Error('Phone number already registered');
+    // Check existing phone for INDIVIDUAL users only
+    const existingIndividualPhone = await db.select().from(users)
+      .where(and(eq(users.phone, phone), eq(users.userType, 'individual')))
+      .limit(1);
+    if (existingIndividualPhone.length > 0) {
+      throw new Error('Individual phone number already registered');
     }
 
     // Check existing email
