@@ -1,18 +1,17 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { StatusBar, Text, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AppNavigator } from './src/navigation/AppNavigator';
+import { queryClient } from './src/services/queryClient';
 
 function App() {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-2xl font-bold text-gray-900">
-            Merhaba! 👋
-          </Text>
-        </View>
-      </SafeAreaView>
+      <QueryClientProvider client={queryClient}>
+        <StatusBar barStyle="dark-content" />
+        <AppNavigator />
+      </QueryClientProvider>
     </SafeAreaProvider>
   );
 }

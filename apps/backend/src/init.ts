@@ -1,6 +1,5 @@
 import { connectRedis, redis } from "./config/redis";
-import { db, testConnection } from "./db/connection";
-import { products } from "./db/schema";
+import { eventBus, initEventBus } from "./event-bus";
 
 // Initialize connections
 export async function initializeServices() {
@@ -9,13 +8,18 @@ export async function initializeServices() {
   const redisConnected = await connectRedis();
   await redis.ping();
 
-  const dbConnected = await testConnection();
-  await db.select().from(products).limit(1);
+  // Start modular Event Bus system
+  await initEventBus();
+  console.log('📡 EventBus health:', eventBus.health());
 
-  if (!dbConnected || !redisConnected) {
+  // Log detailed health for debugging
+  console.log('📊 Detailed EventBus status:', eventBus.detailedHealth());
+
+  if (!redisConnected) {
     console.error('❌ Failed to connect to required services');
     process.exit(1);
   }
 
   console.log('✅ All services initialized successfully');
+  console.log(`🎯 EventBus ready for ${eventBus.getRegisteredSchemas().length} event types`);
 }
