@@ -1,14 +1,14 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/connection';
 import { otpCodes } from '../../db/schema/users';
-import { publishEphemeral } from '../../event-bus';
+import { publishPersistent } from '../../event-bus';
 import { auth0Service } from '../../services/auth0';
 
 export class OTPService {
   async send(phone: string, purpose: 'registration' | 'login'): Promise<void> {
     // Let Auth0 generate and send OTP - we don't generate our own
     await auth0Service.sendPhoneOTP(phone);
-    await publishEphemeral('auth.otp.sent', { phone, purpose });
+    await publishPersistent('auth.otp.sent', { phone, purpose });
 
     console.log(`📱 Auth0 OTP sent: ${phone}`);
   }
@@ -32,7 +32,7 @@ export class OTPService {
       .set({ isUsed: true, usedAt: new Date() })
       .where(eq(otpCodes.id, otp.id));
 
-    await publishEphemeral('auth.otp.verified', { phone });
+    await publishPersistent('auth.otp.verified', { phone });
     return true;
   }
 }
