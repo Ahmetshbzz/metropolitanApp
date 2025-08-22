@@ -1,5 +1,6 @@
 import { connectRedis, redis } from "./config/redis";
 import { eventBus, initEventBus } from "./event-bus";
+import { AuthModule } from "./modules/auth";
 
 // Initialize connections
 export async function initializeServices() {
@@ -11,6 +12,9 @@ export async function initializeServices() {
   // Start modular Event Bus system
   await initEventBus();
   console.log('📡 EventBus health:', eventBus.health());
+
+  // Initialize modules with event-driven communication
+  await AuthModule.init();
 
   // Log detailed health for debugging
   console.log('📊 Detailed EventBus status:', eventBus.detailedHealth());

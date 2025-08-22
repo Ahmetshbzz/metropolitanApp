@@ -118,16 +118,23 @@ export class RedisTransport {
     group: string,
     dispatch: (envelope: EventEnvelope, group?: string) => Promise<void>
   ): void {
-    ensureStreamLoop({
-      name,
-      group,
-      serviceName: this.config.serviceName,
-      redis: this.redisPub,
-      dispatch,
-      getActive: () => this.started,
-      getMode: () => this.config.mode,
-      streamLoops: this.streamLoops,
-    });
+    // Ensure stream group exists before starting loop
+    ensureStreamGroup(this.redisPub, name, group)
+      .then(() => {
+        ensureStreamLoop({
+          name,
+          group,
+          serviceName: this.config.serviceName,
+          redis: this.redisPub,
+          dispatch,
+          getActive: () => this.started,
+          getMode: () => this.config.mode,
+          streamLoops: this.streamLoops,
+        });
+      })
+      .catch(error => {
+        console.error(`❌ Failed to ensure stream group for ${name}:${group}:`, error);
+      });
   }
 
   private isBroadcastEnabled(): boolean {
