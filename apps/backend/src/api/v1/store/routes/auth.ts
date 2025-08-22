@@ -2,9 +2,46 @@ import { Elysia } from 'elysia';
 import { auth } from '../../../../modules/auth';
 import { apiResponse } from '../../../middleware/versioning';
 
+interface CheckPhoneRequest {
+  phone: string;
+}
+
+interface CorporateRegisterRequest {
+  phone: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  nip: string;
+  taxNumber?: string;
+}
+
+interface IndividualRegisterRequest {
+  phone: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+interface SendOTPRequest {
+  phone: string;
+  purpose: string;
+}
+
+interface LoginRequest {
+  phone: string;
+  otp: string;
+  userType: string;
+}
+
+interface LogoutRequest {
+  headers: {
+    authorization?: string;
+  };
+}
+
 export const authRoutes = new Elysia({ prefix: '/auth' })
   // Corporate phone check - kayıtlı mı kontrol et
-  .post('/corporate/check-phone', async ({ body }: any) => {
+  .post('/corporate/check-phone', async ({ body }: { body: CheckPhoneRequest }) => {
     const { phone } = body;
 
     if (!phone) {
@@ -31,7 +68,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   })
 
   // Individual phone check - kayıtlı mı kontrol et
-  .post('/individual/check-phone', async ({ body }: any) => {
+  .post('/individual/check-phone', async ({ body }: { body: CheckPhoneRequest }) => {
     const { phone } = body;
 
     if (!phone) {
@@ -58,7 +95,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   })
 
   // Corporate registration
-  .post('/corporate/register', async ({ body }: any) => {
+  .post('/corporate/register', async ({ body }: { body: CorporateRegisterRequest }) => {
     const { phone, email, firstName, lastName, nip, taxNumber } = body;
 
     if (!phone || !email || !firstName || !lastName || !nip) {
@@ -82,7 +119,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   })
 
   // Individual registration
-  .post('/individual/register', async ({ body }: any) => {
+  .post('/individual/register', async ({ body }: { body: IndividualRegisterRequest }) => {
     const { phone, email, firstName, lastName } = body;
 
     if (!phone || !email || !firstName || !lastName) {
@@ -99,7 +136,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   })
 
   // Send OTP
-  .post('/otp/send', async ({ body }: any) => {
+  .post('/otp/send', async ({ body }: { body: SendOTPRequest }) => {
     const { phone, purpose } = body;
 
     if (!phone || !purpose) {
@@ -108,7 +145,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
     // For login purpose, check if user exists
     if (purpose === 'login') {
-      const user = await auth.individual.findByPhone(phone) || await auth.corporate.findByPhone(phone);
+      const user = await auth.individual.findByPhone(phone) ?? await auth.corporate.findByPhone(phone);
       if (!user) {
         return apiResponse({ error: 'NOT_FOUND' }, { status: 404 });
       }
@@ -119,7 +156,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   })
 
   // Login with OTP
-  .post('/login', async ({ body }: any) => {
+  .post('/login', async ({ body }: { body: LoginRequest }) => {
     const { phone, otp, userType } = body;
 
     if (!phone || !otp || !userType) {
@@ -137,7 +174,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   })
 
   // Logout
-  .post('/logout', async ({ headers }: any) => {
+  .post('/logout', async ({ headers }: LogoutRequest) => {
     const authHeader = headers.authorization;
     if (!authHeader) {
       return apiResponse({ error: 'Session token required' }, { status: 401 });

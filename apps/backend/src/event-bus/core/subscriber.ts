@@ -1,4 +1,4 @@
-import type { EventHandler, EventName, SubscribeOptions, EventEnvelope } from '../types';
+import type { EventHandler, EventName, SubscribeOptions } from '../types';
 import { Semaphore } from '../semaphore';
 
 export class EventSubscriber {

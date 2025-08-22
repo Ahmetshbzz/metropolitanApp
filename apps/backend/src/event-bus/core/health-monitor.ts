@@ -94,7 +94,7 @@ export class HealthMonitor {
     };
   }
 
-  getDetailedHealth(started: boolean) {
+  getDetailedHealth(started: boolean): unknown {
     const basicHealth = this.getHealth(started);
     const transportHealth = this.transport.getHealth();
 

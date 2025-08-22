@@ -3,6 +3,15 @@ import { requireAdminAuth } from '../../../middleware/auth';
 import { keyManager } from '../../../middleware/keys';
 import { apiResponse } from '../../../middleware/versioning';
 
+interface GenerateKeyRequest {
+  name: string;
+  clientType: string;
+}
+
+interface RevokeKeyParams {
+  keyId: string;
+}
+
 // Admin API routes - admin only
 export const adminRoutes = new Elysia({ prefix: '/admin' })
   .get('/health', () => {
@@ -17,7 +26,7 @@ export const adminRoutes = new Elysia({ prefix: '/admin' })
   })
 
   // API Key Management - Admin Only
-  .post('/keys/generate', requireAdminAuth, async ({ body }: any) => {
+  .post('/keys/generate', requireAdminAuth, async ({ body }: { body: GenerateKeyRequest }) => {
     const { name, clientType } = body;
 
     if (!name || !clientType) {
@@ -65,7 +74,7 @@ export const adminRoutes = new Elysia({ prefix: '/admin' })
     });
   })
 
-  .delete('/keys/:keyId/revoke', requireAdminAuth, ({ params }: any) => {
+  .delete('/keys/:keyId/revoke', requireAdminAuth, ({ params }: { params: RevokeKeyParams }) => {
     const keys = keyManager.listKeys();
     const targetKey = keys.find(k => k.id === params.keyId);
 

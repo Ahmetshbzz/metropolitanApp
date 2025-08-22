@@ -6,9 +6,9 @@ import { sessionService } from './session';
 
 // Auth module orchestrator
 export class AuthModule {
-  static async init() {
+  static async init(): Promise<void> {
     registerAuthEventHandlers();
-    console.log('🔐 Auth module initialized');
+    // console.log('🔐 Auth module initialized');
   }
 
   // Public interface

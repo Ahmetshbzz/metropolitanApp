@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/connection';
 import { userSessions, users } from '../../db/schema/users';
-import type { User } from './types';
+import type { User, UserType } from './types';
 
 export class SessionService {
   async create(userId: string): Promise<string> {
@@ -38,13 +38,13 @@ export class SessionService {
 
     return {
       id: session.users.id,
-      userType: session.users.userType as any,
+      userType: session.users.userType as UserType,
       phone: session.users.phone,
-      email: session.users.email || undefined,
-      firstName: session.users.firstName || undefined,
-      lastName: session.users.lastName || undefined,
-      companyName: session.users.companyName || undefined,
-      taxNumber: session.users.taxNumber || undefined,
+      email: session.users.email ?? undefined,
+      firstName: session.users.firstName ?? undefined,
+      lastName: session.users.lastName ?? undefined,
+      companyName: session.users.companyName ?? undefined,
+      taxNumber: session.users.taxNumber ?? undefined,
       isActive: session.users.isActive,
       isPhoneVerified: session.users.isPhoneVerified,
       isEmailVerified: session.users.isEmailVerified,

@@ -1,3 +1,16 @@
+interface GUSAPIResponse {
+  result?: {
+    subject?: {
+      name?: string;
+      statusVat?: string;
+      workingAddress?: string;
+      registeredAddress?: string;
+      regon?: string;
+      krs?: string;
+    };
+  };
+}
+
 export interface GUSCompanyData {
   nip: string;
   name: string;
@@ -47,10 +60,10 @@ export class GUSService {
         throw new Error(`GUS API error: ${response.status} - ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as GUSAPIResponse;
 
       // Check if company exists and is active
-      if (!data.result || !data.result.subject) {
+      if (!data.result?.subject) {
         return {
           isValid: false,
           isActive: false,
@@ -63,12 +76,12 @@ export class GUSService {
 
       const companyData: GUSCompanyData = {
         nip: cleanNIP,
-        name: subject.name || 'N/A',
+        name: subject.name ?? 'N/A',
         status: isActive ? 'active' : 'inactive',
         address: {
-          street: subject.workingAddress || subject.registeredAddress || 'N/A',
-          city: this.extractCity(subject.workingAddress || subject.registeredAddress || ''),
-          postalCode: this.extractPostalCode(subject.workingAddress || subject.registeredAddress || ''),
+          street: subject.workingAddress ?? subject.registeredAddress ?? 'N/A',
+          city: this.extractCity(subject.workingAddress ?? subject.registeredAddress ?? ''),
+          postalCode: this.extractPostalCode(subject.workingAddress ?? subject.registeredAddress ?? ''),
           country: 'Poland'
         },
         regon: subject.regon,

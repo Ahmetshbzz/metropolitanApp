@@ -19,14 +19,14 @@ export const storeTypeDefs = `
 
 export const storeResolvers = {
   Query: {
-    health: () => ({
+    health: (): { status: string; service: string; timestamp: string } => ({
       status: 'healthy',
       service: 'store-graphql',
       timestamp: new Date().toISOString()
     }),
-    version: () => ({
-      version: process.env.API_VERSION || '1.0.0',
-      instance: process.env.INSTANCE_ID || 'local',
+    version: (): { version: string; instance: string; uptime: number } => ({
+      version: process.env.API_VERSION ?? '1.0.0',
+      instance: process.env.INSTANCE_ID ?? 'local',
       uptime: Math.floor(process.uptime())
     })
   }

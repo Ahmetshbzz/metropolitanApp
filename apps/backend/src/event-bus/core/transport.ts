@@ -1,15 +1,27 @@
 import { ensureStreamGroup, ensureStreamLoop } from '../streams';
 import type { BusMode, EventEnvelope } from '../types';
 
+interface RedisClient {
+  duplicate(): RedisClient;
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  pSubscribe(pattern: string, listener: (message: string, channel: string) => Promise<void>): Promise<void>;
+  pUnsubscribe(pattern: string): Promise<void>;
+  xGroupCreate(key: string, group: string, id: string, options?: { MKSTREAM: boolean }): Promise<string>;
+  xReadGroup(group: string, consumer: string, streams: Array<{ key: string; id: string }>, options?: { COUNT: number; BLOCK: number }): Promise<Array<{ name: string; messages: Array<{ id: string; message: Record<string, string> }> }>>;
+  xAck(key: string, group: string, messageId: string): Promise<number>;
+  xAdd(key: string, id: string, message: Record<string, string>): Promise<string>;
+}
+
 export interface TransportConfig {
   mode: BusMode;
   serviceName: string;
-  redis: any;
+  redis: RedisClient;
 }
 
 export class RedisTransport {
-  private redisPub: any;
-  private redisSub: any | null = null;
+  private redisPub: RedisClient;
+  private redisSub: RedisClient | null = null;
   private streamLoops: Map<string, boolean> = new Map();
   private started = false;
 
@@ -28,7 +40,7 @@ export class RedisTransport {
       await this.startBroadcastListener(onBroadcastMessage);
       await this.startStreamConsumers(dispatch, getAllGroups);
       this.started = true;
-      console.log(`🚀 RedisTransport started in ${this.config.mode} mode`);
+      // console.log(`🚀 RedisTransport started in ${this.config.mode} mode`);
     } catch (error) {
       console.error('❌ Failed to start RedisTransport:', error);
       throw new Error(`Transport initialization failed: ${error}`);
@@ -38,7 +50,7 @@ export class RedisTransport {
   async stop(): Promise<void> {
     if (!this.started) return;
 
-    const cleanup = async () => {
+    const cleanup = async (): Promise<void> => {
       // Stop broadcast listener
       if (this.redisSub) {
         try {
@@ -57,7 +69,7 @@ export class RedisTransport {
     try {
       await cleanup();
       this.started = false;
-      console.log('🛑 RedisTransport stopped');
+      // console.log('🛑 RedisTransport stopped');
     } catch (error) {
       console.error('❌ Error during transport shutdown:', error);
       throw error;
@@ -87,7 +99,7 @@ export class RedisTransport {
       }
     });
 
-    console.log('📡 Broadcast listener started');
+    // console.log('📡 Broadcast listener started');
   }
 
   private async startStreamConsumers(
@@ -110,7 +122,7 @@ export class RedisTransport {
       }
     }
 
-    console.log('🌀 Stream consumers started');
+    // console.log('🌀 Stream consumers started');
   }
 
   ensureStreamLoop(
@@ -119,7 +131,7 @@ export class RedisTransport {
     dispatch: (envelope: EventEnvelope, group?: string) => Promise<void>
   ): void {
     // Ensure stream group exists before starting loop
-    ensureStreamGroup(this.redisPub, name, group)
+    void ensureStreamGroup(this.redisPub, name, group)
       .then(() => {
         ensureStreamLoop({
           name,
@@ -145,7 +157,7 @@ export class RedisTransport {
     return this.config.mode === 'redis-streams' || this.config.mode === 'hybrid';
   }
 
-  getHealth() {
+  getHealth(): unknown {
     return {
       started: this.started,
       broadcastEnabled: this.isBroadcastEnabled(),

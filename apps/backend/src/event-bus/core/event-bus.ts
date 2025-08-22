@@ -36,7 +36,7 @@ export class EventBus {
     this.initializeModules(config);
   }
 
-  private initializeModules(config?: EventBusConfig): void {
+  private initializeModules(_config?: EventBusConfig): void {
     // Import Redis here to avoid circular dependency issues
     const { redis } = require('../../config/redis');
 
@@ -122,7 +122,7 @@ export class EventBus {
       );
 
       this.started = true;
-      console.log(`✅ EventBus started successfully in ${this.mode} mode`);
+      // console.log(`✅ EventBus started successfully in ${this.mode} mode`);
 
     } catch (error) {
       this.healthMonitor.recordError(`Failed to start EventBus: ${error}`);
@@ -140,7 +140,7 @@ export class EventBus {
     try {
       await this.transport.stop();
       this.started = false;
-      console.log('✅ EventBus stopped successfully');
+      // console.log('✅ EventBus stopped successfully');
     } catch (error) {
       this.healthMonitor.recordError(`Failed to stop EventBus: ${error}`);
       console.error('❌ EventBus shutdown failed:', error);
@@ -148,11 +148,11 @@ export class EventBus {
     }
   }
 
-  health() {
+  health(): unknown {
     return this.healthMonitor.getHealth(this.started);
   }
 
-  detailedHealth() {
+  detailedHealth(): unknown {
     return this.healthMonitor.getDetailedHealth(this.started);
   }
 
@@ -186,12 +186,12 @@ export class EventBus {
   }
 
   // Advanced monitoring and debugging
-  async inspectDeadLetterQueue(eventName: EventName): Promise<any[]> {
+  async inspectDeadLetterQueue(eventName: EventName): Promise<unknown[]> {
     try {
       const { redis } = require('../../config/redis');
       const dlqKey = `events:dlq:${eventName}`;
       const messages = await redis.xRead([{ key: dlqKey, id: '0-0' }], { COUNT: 100 });
-      return messages || [];
+      return messages ?? [];
     } catch (error) {
       console.error(`❌ Failed to inspect DLQ for ${eventName}:`, error);
       return [];
@@ -203,7 +203,7 @@ export class EventBus {
       const { redis } = require('../../config/redis');
       const dlqKey = `events:dlq:${eventName}`;
       await redis.del(dlqKey);
-      console.log(`🗑️  Cleared DLQ for event: ${eventName}`);
+      // console.log(`🗑️  Cleared DLQ for event: ${eventName}`);
     } catch (error) {
       console.error(`❌ Failed to clear DLQ for ${eventName}:`, error);
       throw error;

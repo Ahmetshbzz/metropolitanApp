@@ -24,7 +24,7 @@ export const api = new Elysia()
     return apiResponse({
       status: 'healthy',
       apis: {
-        rest: `${process.env.API_PREFIX || '/api/v1'}`,
+        rest: `${process.env.API_PREFIX ?? '/api/v1'}`,
         graphql: {
           store: '/graphql/store',
           admin: '/graphql/admin'

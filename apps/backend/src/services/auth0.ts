@@ -1,3 +1,40 @@
+interface Auth0TokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+interface Auth0User {
+  user_id: string;
+  email: string;
+  name: string;
+  given_name?: string;
+  family_name?: string;
+  user_metadata: Record<string, unknown>;
+  app_metadata: Record<string, unknown>;
+}
+
+interface IndividualUserData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+}
+
+interface Auth0VerificationResult {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  scope: string;
+}
+
+interface SocialUserData {
+  sub: string;
+  email: string;
+  given_name: string;
+  family_name: string;
+}
+
 export class Auth0Service {
   private domain = process.env.AUTH0_DOMAIN;
   private clientId = process.env.AUTH0_CLIENT_ID;
@@ -22,11 +59,11 @@ export class Auth0Service {
       throw new Error(`Auth0 Management API token failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as Auth0TokenResponse;
     return data.access_token;
   }
 
-  async createCorporateUser(phone: string, companyName: string, taxNumber?: string) {
+  async createCorporateUser(phone: string, companyName: string, taxNumber?: string): Promise<Auth0User> {
     const token = await this.getManagementToken();
 
     const response = await fetch(`https://${this.domain}/api/v2/users`, {
@@ -43,7 +80,7 @@ export class Auth0Service {
           user_type: 'corporate',
           company_name: companyName,
           tax_number: taxNumber,
-          phone: phone // Phone in metadata
+          phone // Phone in metadata
         },
         app_metadata: {
           user_type: 'corporate'
@@ -55,11 +92,11 @@ export class Auth0Service {
       throw new Error(`Auth0 user creation failed: ${response.statusText}`);
     }
 
-    console.log(`🏢 Corporate user created: ${companyName} - ${phone}`);
-    return await response.json();
+    // Corporate user created successfully
+    return await response.json() as Auth0User;
   }
 
-  async createIndividualUser(data: any) {
+  async createIndividualUser(data: IndividualUserData): Promise<Auth0User> {
     const token = await this.getManagementToken();
 
     const response = await fetch(`https://${this.domain}/api/v2/users`, {
@@ -92,8 +129,8 @@ export class Auth0Service {
       throw new Error(`Auth0 user creation failed: ${response.statusText} - ${error}`);
     }
 
-    console.log(`👤 Individual user created: ${data.firstName} ${data.lastName} - ${data.phone}`);
-    return await response.json();
+    // Individual user created successfully
+    return await response.json() as Auth0User;
   }
 
   async sendPhoneOTP(phone: string): Promise<void> {
@@ -114,10 +151,10 @@ export class Auth0Service {
       throw new Error(`Auth0 SMS OTP failed: ${response.statusText} - ${error}`);
     }
 
-    console.log(`📱 Auth0 OTP sent successfully to: ${phone}`);
+    // OTP sent successfully
   }
 
-  async verifyPhoneOTP(phone: string, otp: string): Promise<any> {
+  async verifyPhoneOTP(phone: string, otp: string): Promise<Auth0VerificationResult> {
     const mobileClientId = process.env.AUTH0_MOBILE_CLIENT_ID;
 
     const response = await fetch(`https://${this.domain}/oauth/token`, {
@@ -127,7 +164,7 @@ export class Auth0Service {
         grant_type: 'http://auth0.com/oauth/grant-type/passwordless/otp',
         client_id: mobileClientId, // Mobile Native App client ID
         username: phone,
-        otp: otp,
+        otp,
         realm: 'sms',
         audience: this.audience,
         scope: 'openid profile phone'
@@ -139,12 +176,11 @@ export class Auth0Service {
       throw new Error(`Auth0 OTP verification failed: ${response.statusText} - ${error}`);
     }
 
-    return await response.json();
+    return await response.json() as Auth0VerificationResult;
   }
 
-  async exchangeSocialToken(provider: string, token: string): Promise<any> {
-    // Social token exchange - implement as needed
-    console.log(`🔗 Exchanging ${provider} token`);
+  async exchangeSocialToken(_provider: string, _token: string): Promise<SocialUserData> {
+    // Social token exchange logic would be implemented here
     return {
       sub: `auth0_social_${Date.now()}`,
       email: 'user@example.com',

@@ -27,7 +27,7 @@ class KeyManager {
     };
 
     this.keys.set(apiKey, publicKey);
-    console.log(`🔑 Public API key generated: ${name} (${clientType})`);
+    // console.log(`🔑 Public API key generated: ${name} (${clientType})`);
 
     return publicKey;
   }
@@ -41,7 +41,7 @@ class KeyManager {
     const apiKey = this.keys.get(key);
     if (apiKey) {
       apiKey.isActive = false;
-      console.log(`🚫 API key revoked: ${apiKey.name}`);
+      // console.log(`🚫 API key revoked: ${apiKey.name}`);
       return true;
     }
     return false;

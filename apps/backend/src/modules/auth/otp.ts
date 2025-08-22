@@ -10,7 +10,7 @@ export class OTPService {
     await auth0Service.sendPhoneOTP(phone);
     await publishPersistent('auth.otp.sent', { phone, purpose });
 
-    console.log(`📱 Auth0 OTP sent: ${phone}`);
+    // OTP sent via Auth0
   }
 
   async verify(phone: string, code: string, purpose: 'registration' | 'login'): Promise<boolean> {

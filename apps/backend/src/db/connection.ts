@@ -3,7 +3,7 @@ import postgres from 'postgres';
 import * as schema from './schema';
 
 // Create PostgreSQL connection
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres123@localhost:5432/metropolitan_db';
+const connectionString = process.env.DATABASE_URL ?? 'postgresql://postgres:postgres123@localhost:5432/metropolitan_db';
 
 // Disable prefetch as it is not supported for "Transaction" pool mode
 const client = postgres(connectionString, {
@@ -20,10 +20,10 @@ export const db = drizzle(client, { schema });
 export { client };
 
 // Test connection function
-export async function testConnection() {
+export async function testConnection(): Promise<boolean> {
   try {
     await client`SELECT 1`;
-    console.log('✅ Database connection successful');
+    // console.log('✅ Database connection successful');
     return true;
   } catch (error) {
     console.error('❌ Database connection failed:', error);

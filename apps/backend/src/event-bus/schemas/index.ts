@@ -9,17 +9,17 @@ export const coreSchemas: EventSchema[] = [
       return typeof payload === 'object' &&
              payload !== null &&
              'timestamp' in payload &&
-             typeof (payload as any).timestamp === 'string';
+             typeof (payload as Record<string, unknown>).timestamp === 'string';
     }
   },
   {
     name: 'system.health.check',
     description: 'Health check event',
-    validate: (payload): payload is { status: string; details?: any } => {
+    validate: (payload): payload is { status: string; details?: unknown } => {
       return typeof payload === 'object' &&
              payload !== null &&
              'status' in payload &&
-             typeof (payload as any).status === 'string';
+             typeof (payload as Record<string, unknown>).status === 'string';
     }
   }
 ];

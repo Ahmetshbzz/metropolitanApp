@@ -1,22 +1,31 @@
 import type { BusMode, EventEnvelope } from './types';
 import { nowIso } from './types';
 
-export const streamKey = (name: string) => `events:${name}`;
-export const dlqKey = (name: string) => `events:dlq:${name}`;
+interface RedisClient {
+  xGroupCreate(key: string, group: string, id: string, options?: { MKSTREAM: boolean }): Promise<string>;
+  xReadGroup(group: string, consumer: string, streams: Array<{ key: string; id: string }>, options?: { COUNT: number; BLOCK: number }): Promise<Array<{ name: string; messages: Array<{ id: string; message: Record<string, string> }> }>>;
+  xAck(key: string, group: string, messageId: string): Promise<number>;
+  xAdd(key: string, id: string, message: Record<string, string>): Promise<string>;
+}
 
-export async function ensureStreamGroup(redis: any, name: string, group: string): Promise<void> {
+// Unused interfaces removed
+
+export const streamKey = (name: string): string => `events:${name}`;
+export const dlqKey = (name: string): string => `events:dlq:${name}`;
+
+export async function ensureStreamGroup(redis: RedisClient, name: string, group: string): Promise<void> {
   const key = streamKey(name);
   try {
     await redis.xGroupCreate(key, group, '$', { MKSTREAM: true });
-    console.debug(`✅ Stream group created: ${key}:${group}`);
-  } catch (err: any) {
-    const msg = String(err?.message ?? err);
-    if (msg.includes('BUSYGROUP')) {
+    // Stream group created successfully
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    if (errorMessage.includes('BUSYGROUP')) {
       // Group already exists, this is expected
-      console.debug(`ℹ️  Stream group already exists: ${key}:${group}`);
+      // Stream group already exists
     } else {
       console.error(`❌ Failed to create stream group ${key}:${group}:`, err);
-      throw new Error(`Stream group creation failed for ${key}:${group}: ${msg}`);
+      throw new Error(`Stream group creation failed for ${key}:${group}: ${errorMessage}`);
     }
   }
 }
@@ -25,24 +34,24 @@ export function ensureStreamLoop(opts: {
   name: string;
   group: string;
   serviceName: string;
-  redis: any;
+  redis: RedisClient;
   dispatch: (env: EventEnvelope, group: string) => Promise<void>;
   getActive: () => boolean; // returns bus.started
   getMode: () => BusMode;
   streamLoops: Map<string, boolean>;
-}) {
+}): void {
   const { name, group, serviceName, redis, dispatch, getActive, getMode, streamLoops } = opts;
   const loopKey = `${name}::${group}`;
   if (streamLoops.get(loopKey)) return;
   streamLoops.set(loopKey, true);
   const key = streamKey(name);
   const consumer = `${serviceName}-${process.pid}-${Math.random().toString(16).slice(2)}`;
-  const run = async () => {
-    console.log(`🌀 Starting stream loop for ${name}:${group} with consumer ${consumer}`);
+  const run = async (): Promise<void> => {
+    // console.log(`🌀 Starting stream loop for ${name}:${group} with consumer ${consumer}`);
 
     while (getActive() && (getMode() === 'redis-streams' || getMode() === 'hybrid')) {
       if (!streamLoops.get(loopKey)) {
-        console.log(`🛑 Stream loop stopped for ${name}:${group}`);
+        // console.log(`🛑 Stream loop stopped for ${name}:${group}`);
         break;
       }
 
@@ -75,7 +84,7 @@ export function ensureStreamLoop(opts: {
               await dispatch(envelope, group);
               await redis.xAck(key, group, messageId);
 
-              console.debug(`✅ Processed stream message: ${name}:${group}:${messageId}`);
+              // Message processed successfully
 
             } catch (err) {
               console.error(`❌ Stream message processing failed for ${name}:${group}:${messageId}:`, err);
@@ -94,7 +103,7 @@ export function ensureStreamLoop(opts: {
                     originalMessage: msg.message
                   })
                 });
-                console.log(`💀 Message moved to DLQ: ${dlqKey(name)}`);
+                // console.log(`💀 Message moved to DLQ: ${dlqKey(name)}`);
               } catch (dlqErr) {
                 console.error(`❌ Failed to move message to DLQ:`, dlqErr);
               }
@@ -102,7 +111,7 @@ export function ensureStreamLoop(opts: {
               // Always acknowledge to prevent reprocessing
               try {
                 await redis.xAck(key, group, messageId);
-                console.debug(`✅ Acknowledged failed message: ${messageId}`);
+                // Failed message acknowledged
               } catch (ackErr) {
                 console.error(`❌ Failed to acknowledge message ${messageId}:`, ackErr);
               }
@@ -116,7 +125,7 @@ export function ensureStreamLoop(opts: {
       }
     }
 
-    console.log(`🏁 Stream loop ended for ${name}:${group}`);
+    // console.log(`🏁 Stream loop ended for ${name}:${group}`);
   };
   void run();
 }

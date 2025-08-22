@@ -9,10 +9,10 @@ export class Semaphore {
 
   async acquire(): Promise<() => void> {
     return new Promise((resolve) => {
-      const tryAcquire = () => {
+      const tryAcquire = (): void => {
         if (this.count > 0) {
           this.count -= 1;
-          resolve(() => {
+          resolve((): void => {
             this.count += 1;
             const next = this.queue.shift();
             if (next) next();

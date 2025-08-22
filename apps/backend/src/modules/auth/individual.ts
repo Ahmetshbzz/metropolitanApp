@@ -1,18 +1,18 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/connection';
-import { users } from '../../db/schema/users';
+import { users, authProviders } from '../../db/schema/users';
 import { publishPersistent } from '../../event-bus';
 import { auth0Service } from '../../services/auth0';
 import { otpService } from './otp';
 import { sessionService } from './session';
-import type { AuthProvider, User } from './types';
+import type { AuthProvider, User, UserType } from './types';
 
 export class IndividualAuthService {
   async findByPhone(phone: string): Promise<User | null> {
     const [user] = await db.select().from(users)
       .where(and(eq(users.phone, phone), eq(users.userType, 'individual')))
       .limit(1);
-    return user || null;
+    return user ?? null;
   }
 
   async registerWithPhone(phone: string, firstName: string, lastName: string, email: string): Promise<{ userId: string; requiresOTP: boolean }> {
@@ -67,7 +67,7 @@ export class IndividualAuthService {
     const [newUser] = await db.insert(users).values({
       userType: 'individual',
       phone: '', // Social login'de phone yok
-      email: email || auth0User.email,
+      email: email ?? auth0User.email,
       firstName: auth0User.given_name,
       lastName: auth0User.family_name,
       isPhoneVerified: false,
@@ -94,12 +94,12 @@ export class IndividualAuthService {
       user: {
         ...newUser,
         auth0UserId: auth0User.sub,
-        userType: newUser.userType as any,
-        email: newUser.email || undefined,
-        firstName: newUser.firstName || undefined,
-        lastName: newUser.lastName || undefined,
-        companyName: newUser.companyName || undefined,
-        taxNumber: newUser.taxNumber || undefined,
+        userType: newUser.userType as UserType,
+        email: newUser.email ?? undefined,
+        firstName: newUser.firstName ?? undefined,
+        lastName: newUser.lastName ?? undefined,
+        companyName: newUser.companyName ?? undefined,
+        taxNumber: newUser.taxNumber ?? undefined,
       },
       sessionToken
     };
@@ -131,12 +131,12 @@ export class IndividualAuthService {
       user: {
         ...user,
         auth0UserId: '',
-        userType: user.userType as any,
-        email: user.email || undefined,
-        firstName: user.firstName || undefined,
-        lastName: user.lastName || undefined,
-        companyName: user.companyName || undefined,
-        taxNumber: user.taxNumber || undefined,
+        userType: user.userType as UserType,
+        email: user.email ?? undefined,
+        firstName: user.firstName ?? undefined,
+        lastName: user.lastName ?? undefined,
+        companyName: user.companyName ?? undefined,
+        taxNumber: user.taxNumber ?? undefined,
       },
       sessionToken
     };

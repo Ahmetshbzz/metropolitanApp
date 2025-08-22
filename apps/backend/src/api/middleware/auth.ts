@@ -1,6 +1,10 @@
 import type { Context } from 'elysia';
 import { keyManager, validateAdminSecret, type PublicApiKey } from './keys';
 
+interface AuthenticatedContext extends Context {
+  user: AuthUser;
+}
+
 export enum UserType {
   INDIVIDUAL = 'individual',
   CORPORATE = 'corporate',
@@ -16,8 +20,8 @@ export interface AuthUser {
 }
 
 // Enhanced auth middleware with secret key and public key support
-export const authMiddleware = (allowedTypes: UserType[]) => {
-  return async (ctx: Context) => {
+export const authMiddleware = (allowedTypes: UserType[]): ((ctx: Context) => Promise<unknown>) => {
+  return async (ctx: Context): Promise<unknown> => {
     const authHeader = ctx.headers.authorization;
 
     if (!authHeader) {
@@ -41,7 +45,7 @@ export const authMiddleware = (allowedTypes: UserType[]) => {
         return { error: 'Insufficient permissions' };
       }
 
-      (ctx as any).user = adminUser;
+      (ctx as AuthenticatedContext).user = adminUser;
       return;
     }
 
@@ -62,7 +66,7 @@ export const authMiddleware = (allowedTypes: UserType[]) => {
         return { error: 'Insufficient permissions for this client type' };
       }
 
-      (ctx as any).user = clientUser;
+      (ctx as AuthenticatedContext).user = clientUser;
       return;
     }
 

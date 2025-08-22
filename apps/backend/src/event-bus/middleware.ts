@@ -1,17 +1,17 @@
-import { EventEnvelope, Middleware } from './types';
+import type { EventEnvelope, Middleware } from './types';
 
-export const loggerMiddleware: Middleware = async (evt: EventEnvelope, next) => {
-  const start = Date.now();
+export const loggerMiddleware: Middleware = async (evt: EventEnvelope, next): Promise<void> => {
+  // const start = Date.now();
   try {
     await next();
   } finally {
-    const ms = Date.now() - start;
-    const label = `${evt.name}`;
-    console.log(`📨 event handled`, { label, ms, id: evt.meta.id, source: evt.meta.source });
+    // const ms = Date.now() - start;
+    // const label = `${evt.name}`;
+    // console.log(`📨 event handled`, { label, ms, id: evt.meta.id, source: evt.meta.source });
   }
 };
 
-export const errorBoundaryMiddleware: Middleware = async (evt, next) => {
+export const errorBoundaryMiddleware: Middleware = async (evt, next): Promise<void> => {
   try {
     await next();
   } catch (err) {
@@ -27,8 +27,8 @@ export const errorBoundaryMiddleware: Middleware = async (evt, next) => {
   }
 };
 
-export const composeMiddlewares = (middlewares: Middleware[]) => {
-  return async (evt: EventEnvelope, terminal: () => Promise<void>) => {
+export const composeMiddlewares = (middlewares: Middleware[]): ((evt: EventEnvelope, terminal: () => Promise<void>) => Promise<void>) => {
+  return async (evt: EventEnvelope, terminal: () => Promise<void>): Promise<void> => {
     let index = -1;
     const dispatch = async (i: number): Promise<void> => {
       if (i <= index) throw new Error('next() called multiple times');

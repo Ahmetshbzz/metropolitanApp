@@ -2,9 +2,14 @@ import { streamKey } from '../streams';
 import type { BusMode, EventEnvelope, EventName, PublishOptions } from '../types';
 import { createUuid, nowIso } from '../types';
 
+interface RedisClient {
+  xAdd(key: string, id: string, message: Record<string, string>): Promise<string>;
+  publish(channel: string, message: string): Promise<number>;
+}
+
 export class EventPublisher {
   constructor(
-    private redisPub: any,
+    private redisPub: RedisClient,
     private serviceName: string,
     private getMode: () => BusMode,
     private localDispatch: (envelope: EventEnvelope) => Promise<void>
@@ -24,7 +29,7 @@ export class EventPublisher {
       },
     };
 
-    const execute = async () => {
+    const execute = async (): Promise<void> => {
       const mode = this.getMode();
       const durability = options?.durability;
 

@@ -6,14 +6,14 @@ import { auth0Service } from '../../services/auth0';
 import { gusService } from '../../services/gus';
 import { otpService } from './otp';
 import { sessionService } from './session';
-import type { RegisterCorporateRequest, User } from './types';
+import type { RegisterCorporateRequest, User, UserType } from './types';
 
 export class CorporateAuthService {
   async findByPhone(phone: string): Promise<User | null> {
     const [user] = await db.select().from(users)
       .where(and(eq(users.phone, phone), eq(users.userType, 'corporate')))
       .limit(1);
-    return user || null;
+    return user ?? null;
   }
 
   async register(data: RegisterCorporateRequest): Promise<{ userId: string; requiresOTP: boolean }> {
@@ -43,18 +43,18 @@ export class CorporateAuthService {
     }
 
     // Validate NIP with GUS API
-    console.log(`🏢 Validating NIP: ${data.nip} with GUS API...`);
+    // Validating NIP with GUS API
     const gusValidation = await gusService.validateNIP(data.nip);
 
     if (!gusValidation.isValid) {
-      throw new Error(gusValidation.error || 'Invalid NIP number');
+      throw new Error(gusValidation.error ?? 'Invalid NIP number');
     }
 
     if (!gusValidation.isActive) {
       throw new Error('Company is not active in GUS registry');
     }
 
-    console.log(`✅ NIP validated: ${gusValidation.company?.name}`);
+    // NIP validation successful
     const companyData = gusValidation.company!;
 
     // Create local user with GUS-validated data (Auth0 only for SMS OTP)
@@ -119,12 +119,12 @@ export class CorporateAuthService {
       user: {
         ...user,
         auth0UserId: '', // Will be fetched separately if needed
-        userType: user.userType as any,
-        email: user.email || undefined,
-        firstName: user.firstName || undefined,
-        lastName: user.lastName || undefined,
-        companyName: user.companyName || undefined,
-        taxNumber: user.taxNumber || undefined,
+        userType: user.userType as UserType,
+        email: user.email ?? undefined,
+        firstName: user.firstName ?? undefined,
+        lastName: user.lastName ?? undefined,
+        companyName: user.companyName ?? undefined,
+        taxNumber: user.taxNumber ?? undefined,
       },
       sessionToken
     };

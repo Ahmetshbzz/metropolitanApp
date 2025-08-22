@@ -18,7 +18,7 @@ export class EventDispatcher {
       : handlers;
 
     if (filteredHandlers.length === 0) {
-      console.debug(`📭 No handlers registered for event: ${envelope.name}`);
+      // console.debug(`📭 No handlers registered for event: ${envelope.name}`);
       return;
     }
 
@@ -78,7 +78,7 @@ export class EventDispatcher {
         await handler(evt);
 
         if (attempt > 1) {
-          console.log(`✅ Event handler succeeded after ${attempt} attempts: ${evt.name}`);
+          // console.log(`✅ Event handler succeeded after ${attempt} attempts: ${evt.name}`);
         }
         return;
 
@@ -122,7 +122,7 @@ export class EventDispatcher {
     }
   }
 
-  getDispatchStats() {
+  getDispatchStats(): unknown {
     return {
       registeredEvents: this.subscriber.getAllEventNames().length,
       handlerStats: this.subscriber.getHandlerStats(),

@@ -14,7 +14,7 @@ export class EventValidator {
       console.warn(`⚠️  Schema for event '${schema.name}' is being overwritten`);
     }
     this.schemas.set(schema.name, schema);
-    console.debug(`✅ Schema registered for event: ${schema.name}`);
+    // Schema registered successfully
   }
 
   validateEvent<T>(envelope: EventEnvelope<T>): boolean {
@@ -23,7 +23,7 @@ export class EventValidator {
       throw new Error('Event envelope must have a valid name');
     }
 
-    if (!envelope.meta || !envelope.meta.id || !envelope.meta.occurredAt || !envelope.meta.source) {
+    if (!envelope.meta?.id || !envelope.meta.occurredAt || !envelope.meta.source) {
       throw new Error('Event envelope must have complete metadata');
     }
 
@@ -64,8 +64,8 @@ export const createUserRegisteredSchema = (): EventSchema<{ userId: string }> =>
     return typeof payload === 'object' &&
            payload !== null &&
            'userId' in payload &&
-           typeof (payload as any).userId === 'string' &&
-           (payload as any).userId.length > 0;
+           typeof (payload as Record<string, unknown>).userId === 'string' &&
+           (payload as Record<string, unknown>).userId.length > 0;
   }
 });
 
@@ -76,7 +76,7 @@ export const createCacheInvalidateSchema = (): EventSchema<{ key: string; patter
     return typeof payload === 'object' &&
            payload !== null &&
            'key' in payload &&
-           typeof (payload as any).key === 'string' &&
-           (payload as any).key.length > 0;
+           typeof (payload as Record<string, unknown>).key === 'string' &&
+           (payload as Record<string, unknown>).key.length > 0;
   }
 });
