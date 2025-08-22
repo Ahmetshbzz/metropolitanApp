@@ -3,6 +3,60 @@ import { auth } from '../../../../modules/auth';
 import { apiResponse } from '../../../middleware/versioning';
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
+  // Corporate phone check - kayıtlı mı kontrol et
+  .post('/corporate/check-phone', async ({ body }: any) => {
+    const { phone } = body;
+
+    if (!phone) {
+      return apiResponse({ error: 'Phone number required' }, { status: 400 });
+    }
+
+    const existingUser = await auth.corporate.findByPhone(phone);
+    
+    if (existingUser) {
+      // Kayıtlı - OTP gönder ve giriş yap
+      await auth.otp.send(phone, 'login');
+      return apiResponse({
+        exists: true,
+        message: 'OTP sent for login',
+        userId: existingUser.id
+      });
+    }
+
+    // Kayıtlı değil - kayıt bilgileri lazım
+    return apiResponse({
+      exists: false,
+      message: 'Registration required - company details needed'
+    });
+  })
+
+  // Individual phone check - kayıtlı mı kontrol et  
+  .post('/individual/check-phone', async ({ body }: any) => {
+    const { phone } = body;
+
+    if (!phone) {
+      return apiResponse({ error: 'Phone number required' }, { status: 400 });
+    }
+
+    const existingUser = await auth.individual.findByPhone(phone);
+    
+    if (existingUser) {
+      // Kayıtlı - OTP gönder ve giriş yap
+      await auth.otp.send(phone, 'login');
+      return apiResponse({
+        exists: true,
+        message: 'OTP sent for login', 
+        userId: existingUser.id
+      });
+    }
+
+    // Kayıtlı değil - kayıt bilgileri lazım
+    return apiResponse({
+      exists: false,
+      message: 'Registration required - personal details needed'
+    });
+  })
+
   // Corporate registration
   .post('/corporate/register', async ({ body }: any) => {
     const { phone, companyName, taxNumber } = body;
