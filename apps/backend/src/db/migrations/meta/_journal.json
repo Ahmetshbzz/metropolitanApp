@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1755866134197,
-      "tag": "0000_black_talkback",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1755875886598,
-      "tag": "0001_greedy_doctor_faustus",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1755876638712,
-      "tag": "0002_rare_toad",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1755876707877,
-      "tag": "0003_neat_marten_broadcloak",
+      "when": 1755890984815,
+      "tag": "0000_brown_omega_flight",
       "breakpoints": true
     }
   ]

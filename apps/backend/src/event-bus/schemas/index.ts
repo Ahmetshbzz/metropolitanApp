@@ -62,8 +62,59 @@ export const authSchemas: EventSchema[] = [
   }
 ];
 
+// Audit logs schemas
+export const auditSchemas: EventSchema[] = [
+  {
+    name: 'audit.log.created',
+    description: 'Audit log entry created',
+    validate: (payload): payload is { logId: string; type: string; userId?: string; ip: string; riskScore: number } => {
+      return typeof payload === 'object' &&
+             payload !== null &&
+             'logId' in payload &&
+             'type' in payload &&
+             'ip' in payload &&
+             'riskScore' in payload;
+    }
+  },
+  {
+    name: 'audit.log.analysis.completed',
+    description: 'Log analysis completed',
+    validate: (payload): payload is { logId: string; analysisResult: unknown } => {
+      return typeof payload === 'object' &&
+             payload !== null &&
+             'logId' in payload &&
+             'analysisResult' in payload;
+    }
+  },
+  {
+    name: 'audit.ip.risk.elevated',
+    description: 'IP risk level elevated',
+    validate: (payload): payload is { ip: string; previousLevel: string; currentLevel: string; triggerEvent: string } => {
+      return typeof payload === 'object' &&
+             payload !== null &&
+             'ip' in payload &&
+             'previousLevel' in payload &&
+             'currentLevel' in payload &&
+             'triggerEvent' in payload;
+    }
+  },
+  {
+    name: 'audit.user.suspicious.activity',
+    description: 'Suspicious user activity detected',
+    validate: (payload): payload is { userId: string; activityType: string; riskScore: number; details: string } => {
+      return typeof payload === 'object' &&
+             payload !== null &&
+             'userId' in payload &&
+             'activityType' in payload &&
+             'riskScore' in payload &&
+             'details' in payload;
+    }
+  }
+];
+
 // All schemas combined
 export const allSchemas: EventSchema[] = [
   ...coreSchemas,
   ...authSchemas,
+  ...auditSchemas,
 ];

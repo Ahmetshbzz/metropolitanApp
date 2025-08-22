@@ -1,6 +1,7 @@
 import { connectRedis, redis } from "./config/redis";
 import { initEventBus } from "./event-bus";
 import { AuthModule } from "./modules/auth";
+import { initAuditLogsModule } from "./modules/audit-logs";
 
 // Initialize connections
 export async function initializeServices(): Promise<void> {
@@ -15,6 +16,7 @@ export async function initializeServices(): Promise<void> {
 
   // Initialize modules with event-driven communication
   await AuthModule.init();
+  initAuditLogsModule();
 
   // Log detailed health for debugging
   // console.log('📊 Detailed EventBus status:', eventBus.detailedHealth());

@@ -106,13 +106,17 @@ export class IndividualAuthService {
   }
 
   async loginWithPhone(phone: string, otp: string): Promise<{ user: User; sessionToken: string }> {
-    // Use Auth0 OTP verification instead of local OTP
-    await auth0Service.verifyPhoneOTP(phone, otp);
-
-    const [user] = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
-    if (!user || user.userType !== 'individual') {
-      throw new Error('Individual user not found');
+    // First check if individual user exists locally
+    const [user] = await db.select().from(users)
+      .where(and(eq(users.phone, phone), eq(users.userType, 'individual')))
+      .limit(1);
+    
+    if (!user) {
+      throw new Error('Individual user not found - please register first');
     }
+
+    // Only then verify OTP with Auth0
+    await auth0Service.verifyPhoneOTP(phone, otp);
 
     await db.update(users)
       .set({ lastLoginAt: new Date(), isPhoneVerified: true })

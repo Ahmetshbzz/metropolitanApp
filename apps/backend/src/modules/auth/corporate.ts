@@ -93,13 +93,17 @@ export class CorporateAuthService {
   }
 
   async login(phone: string, otp: string): Promise<{ user: User; sessionToken: string }> {
-    // Use Auth0 OTP verification instead of local OTP
-    await auth0Service.verifyPhoneOTP(phone, otp);
-
-    const [user] = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
-    if (!user || user.userType !== 'corporate') {
-      throw new Error('Corporate user not found');
+    // First check if corporate user exists locally
+    const [user] = await db.select().from(users)
+      .where(and(eq(users.phone, phone), eq(users.userType, 'corporate')))
+      .limit(1);
+    
+    if (!user) {
+      throw new Error('Corporate user not found - please register first');
     }
+
+    // Only then verify OTP with Auth0
+    await auth0Service.verifyPhoneOTP(phone, otp);
 
     // Update login time
     await db.update(users)
