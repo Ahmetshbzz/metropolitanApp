@@ -61,9 +61,9 @@ export const createUserRegisteredSchema = (): EventSchema<{ userId: string }> =>
   name: 'auth.user.registered',
   description: 'Fired when a new user registers',
   validate: (payload): payload is { userId: string } => {
-    return typeof payload === 'object' && 
-           payload !== null && 
-           'userId' in payload && 
+    return typeof payload === 'object' &&
+           payload !== null &&
+           'userId' in payload &&
            typeof (payload as any).userId === 'string' &&
            (payload as any).userId.length > 0;
   }
@@ -73,9 +73,9 @@ export const createCacheInvalidateSchema = (): EventSchema<{ key: string; patter
   name: 'cache.invalidate',
   description: 'Fired when cache needs to be invalidated',
   validate: (payload): payload is { key: string; pattern?: string } => {
-    return typeof payload === 'object' && 
-           payload !== null && 
-           'key' in payload && 
+    return typeof payload === 'object' &&
+           payload !== null &&
+           'key' in payload &&
            typeof (payload as any).key === 'string' &&
            (payload as any).key.length > 0;
   }

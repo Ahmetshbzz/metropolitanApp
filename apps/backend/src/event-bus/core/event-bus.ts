@@ -1,10 +1,10 @@
-import type { BusMode, EventBusConfig, EventEnvelope, EventHandler, EventName, Middleware, PublishOptions, SubscribeOptions } from '../types';
 import { errorBoundaryMiddleware, loggerMiddleware } from '../middleware';
+import type { BusMode, EventBusConfig, EventHandler, EventName, Middleware, PublishOptions, SubscribeOptions } from '../types';
+import { EventDispatcher } from './dispatcher';
+import { HealthMonitor } from './health-monitor';
 import { EventPublisher } from './publisher';
 import { EventSubscriber } from './subscriber';
 import { RedisTransport } from './transport';
-import { EventDispatcher } from './dispatcher';
-import { HealthMonitor } from './health-monitor';
 import { EventValidator, type EventSchema } from './validator';
 
 export class EventBus {
@@ -39,11 +39,11 @@ export class EventBus {
   private initializeModules(config?: EventBusConfig): void {
     // Import Redis here to avoid circular dependency issues
     const { redis } = require('../../config/redis');
-    
+
     if (!redis) {
       throw new Error('Redis connection is required but not available');
     }
-    
+
     // Initialize core modules
     this.validator = new EventValidator();
     this.subscriber = new EventSubscriber();
@@ -123,7 +123,7 @@ export class EventBus {
 
       this.started = true;
       console.log(`✅ EventBus started successfully in ${this.mode} mode`);
-      
+
     } catch (error) {
       this.healthMonitor.recordError(`Failed to start EventBus: ${error}`);
       console.error('❌ EventBus startup failed:', error);

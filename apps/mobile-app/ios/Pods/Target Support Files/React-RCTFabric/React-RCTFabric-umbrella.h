@@ -36,9 +36,7 @@
 #import "React/RCTTextInputUtils.h"
 #import "React/RCTUnimplementedNativeComponentView.h"
 #import "React/RCTUnimplementedViewComponentView.h"
-#import "React/RCTViewAccessibilityElement.h"
 #import "React/RCTViewComponentView.h"
-#import "React/RCTVirtualViewComponentView.h"
 #import "React/RCTComponentViewClassDescriptor.h"
 #import "React/RCTComponentViewDescriptor.h"
 #import "React/RCTComponentViewFactory.h"
@@ -66,11 +64,10 @@
 #import "React/RCTBoxShadow.h"
 #import "React/RCTColorSpaceUtils.h"
 #import "React/RCTGenericDelegateSplitter.h"
-#import "React/RCTGradientUtils.h"
 #import "React/RCTIdentifierPool.h"
 #import "React/RCTLinearGradient.h"
-#import "React/RCTRadialGradient.h"
 #import "React/RCTReactTaggedView.h"
+#import "React/RCTViewFinder.h"
 
 FOUNDATION_EXPORT double RCTFabricVersionNumber;
 FOUNDATION_EXPORT const unsigned char RCTFabricVersionString[];

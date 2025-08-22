@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-version = "0.81.0"
+version = "0.79.5"
 source = { :git => 'https://github.com/facebook/react-native.git' }
 if version == '1000.0.0'
   # This is an unpublished version, use the latest commit hash of the react-native repo, which we’re presumably in.
@@ -16,17 +16,19 @@ use_frameworks = ENV['USE_FRAMEWORKS'] != nil
 folly_compiler_flags = Helpers::Constants.folly_config[:compiler_flags]
 boost_compiler_flags = Helpers::Constants.boost_config[:compiler_flags]
 
-header_search_paths = []
-framework_search_paths = []
-
 header_search_paths = [
-  "\"$(PODS_ROOT)/ReactNativeDependencies\"",
+  "\"$(PODS_ROOT)/boost\"",
+  "\"$(PODS_ROOT)/RCT-Folly\"",
+  "\"$(PODS_ROOT)/DoubleConversion\"",
+  "\"$(PODS_ROOT)/fast_float/include\"",
+  "\"$(PODS_ROOT)/fmt/include\"",
   "\"${PODS_ROOT}/Headers/Public/ReactCodegen/react/renderer/components\"",
   "\"$(PODS_ROOT)/Headers/Private/React-Fabric\"",
   "\"$(PODS_ROOT)/Headers/Private/React-RCTFabric\"",
   "\"$(PODS_ROOT)/Headers/Private/Yoga\"",
   "\"$(PODS_TARGET_SRCROOT)\"",
 ]
+framework_search_paths = []
 
 if use_frameworks
   ReactNativePodsUtils.create_header_search_path_for_frameworks("PODS_CONFIGURATION_BUILD_DIR", "React-Fabric", "React_Fabric", ["react/renderer/components/view/platform/cxx"])
@@ -42,7 +44,7 @@ if use_frameworks
     .each { |search_path|
       header_search_paths << "\"#{search_path}\""
     }
-  end
+end
 
 Pod::Spec.new do |s|
   s.name                = "ReactCodegen"
@@ -64,6 +66,7 @@ Pod::Spec.new do |s|
   }
 
   s.dependency "React-jsiexecutor"
+  s.dependency "RCT-Folly"
   s.dependency "RCTRequired"
   s.dependency "RCTTypeSafety"
   s.dependency "React-Core"
@@ -71,6 +74,8 @@ Pod::Spec.new do |s|
   s.dependency "ReactCommon/turbomodule/bridging"
   s.dependency "ReactCommon/turbomodule/core"
   s.dependency "React-NativeModulesApple"
+  s.dependency "glog"
+  s.dependency "DoubleConversion"
   s.dependency 'React-graphics'
   s.dependency 'React-rendererdebug'
   s.dependency 'React-Fabric'
@@ -81,8 +86,6 @@ Pod::Spec.new do |s|
   s.dependency 'React-RCTAppDelegate'
 
   depend_on_js_engine(s)
-  add_rn_third_party_dependencies(s)
-  add_rncore_dependency(s)
 
   s.script_phases = {
     'name' => 'Generate Specs',
@@ -95,8 +98,8 @@ pushd "$PODS_ROOT/../" > /dev/null
 RCT_SCRIPT_POD_INSTALLATION_ROOT=$(pwd)
 popd >/dev/null
 
-export RCT_SCRIPT_RN_DIR="$RCT_SCRIPT_POD_INSTALLATION_ROOT/../../../../../../../../../../../../../../../Desktop/metropolitanApp-workspace/apps/mobile-app/node_modules/react-native"
-export RCT_SCRIPT_APP_PATH="$RCT_SCRIPT_POD_INSTALLATION_ROOT/../../../../../../../../../../../../../../../Desktop/metropolitanApp-workspace/apps/mobile-app"
+export RCT_SCRIPT_RN_DIR="$RCT_SCRIPT_POD_INSTALLATION_ROOT/../../../../../../../../../../../../../../../Desktop/metropolitan/mobile-app/node_modules/react-native"
+export RCT_SCRIPT_APP_PATH="$RCT_SCRIPT_POD_INSTALLATION_ROOT/../../../../../../../../../../../../../../../Desktop/metropolitan/mobile-app"
 export RCT_SCRIPT_OUTPUT_DIR="$RCT_SCRIPT_POD_INSTALLATION_ROOT"
 export RCT_SCRIPT_TYPE="withCodegenDiscovery"
 

@@ -1,7 +1,7 @@
 import type { BusMode } from '../types';
+import type { EventDispatcher } from './dispatcher';
 import type { EventSubscriber } from './subscriber';
 import type { RedisTransport } from './transport';
-import type { EventDispatcher } from './dispatcher';
 
 export interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -61,10 +61,10 @@ export class HealthMonitor {
     const handlerStats = this.subscriber.getHandlerStats();
 
     const uptime = Math.floor((Date.now() - this.startTime) / 1000);
-    
+
     // Determine overall health status
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    
+
     if (!started || !transportHealth.redisConnected) {
       status = 'unhealthy';
     } else if (this.errors.length > 5 || !transportHealth.subscriberConnected) {
@@ -97,7 +97,7 @@ export class HealthMonitor {
   getDetailedHealth(started: boolean) {
     const basicHealth = this.getHealth(started);
     const transportHealth = this.transport.getHealth();
-    
+
     return {
       ...basicHealth,
       transport: transportHealth,

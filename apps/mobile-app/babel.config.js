@@ -1,7 +1,14 @@
+//  "babel.config.js"
+//  metropolitan app
+//  Created by Ahmet on 30.06.2025.
+
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ['module:@react-native/babel-preset', 'nativewind/babel'],
-    plugins: ['react-native-reanimated/plugin'],
+    presets: [
+      ["babel-preset-expo", { jsxImportSource: "nativewind" }],
+      "nativewind/babel",
+    ],
+    plugins: ["react-native-reanimated/plugin"],
   };
 };

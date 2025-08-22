@@ -53,7 +53,6 @@
 #import "folly/FileUtil.h"
 #import "folly/Fingerprint.h"
 #import "folly/FixedString.h"
-#import "folly/folly-config.h"
 #import "folly/FollyMemcpy.h"
 #import "folly/FollyMemset.h"
 #import "folly/Format-inl.h"

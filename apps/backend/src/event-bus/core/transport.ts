@@ -1,5 +1,5 @@
-import type { BusMode, EventEnvelope } from '../types';
 import { ensureStreamGroup, ensureStreamLoop } from '../streams';
+import type { BusMode, EventEnvelope } from '../types';
 
 export interface TransportConfig {
   mode: BusMode;
@@ -69,14 +69,14 @@ export class RedisTransport {
 
     this.redisSub = this.redisPub.duplicate();
     await this.redisSub.connect();
-    
+
     await this.redisSub.pSubscribe('events:*', async (message: string, channel: string) => {
       try {
         const envelope: EventEnvelope = JSON.parse(message);
-        
+
         // Avoid self-processing duplicate if already dispatched locally
         if (envelope.meta.source === this.config.serviceName) return;
-        
+
         // Validate channel matches event name
         const name = channel.replace('events:', '');
         if (name === envelope.name) {
@@ -97,7 +97,7 @@ export class RedisTransport {
     if (!this.isStreamsEnabled()) return;
 
     const eventGroups = getAllGroups();
-    
+
     for (const [name, groups] of eventGroups.entries()) {
       for (const group of groups) {
         try {
@@ -114,8 +114,8 @@ export class RedisTransport {
   }
 
   ensureStreamLoop(
-    name: string, 
-    group: string, 
+    name: string,
+    group: string,
     dispatch: (envelope: EventEnvelope, group?: string) => Promise<void>
   ): void {
     ensureStreamLoop({

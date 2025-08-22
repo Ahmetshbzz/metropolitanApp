@@ -11,6 +11,7 @@
 #endif
 
 #import "jsinspector-modern/Base64.h"
+#import "jsinspector-modern/CdpJson.h"
 #import "jsinspector-modern/ConsoleMessage.h"
 #import "jsinspector-modern/ExecutionContext.h"
 #import "jsinspector-modern/ExecutionContextManager.h"

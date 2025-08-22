@@ -1,11 +1,11 @@
 {
   "name": "ReactCodegen",
-  "version": "0.81.0",
+  "version": "0.79.5",
   "summary": "Temp pod for generated files for React Native",
   "homepage": "https://facebook.com/",
   "license": "Unlicense",
   "authors": "Facebook",
-  "compiler_flags": "-DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1 -Wno-comma -Wno-shorten-64-to-32 -Wno-documentation -Wno-nullability-completeness -std=c++20",
+  "compiler_flags": "-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1 -Wno-comma -Wno-shorten-64-to-32 -Wno-documentation -Wno-nullability-completeness -std=c++20",
   "source": {
     "git": ""
   },
@@ -16,26 +16,13 @@
   "source_files": "**/*.{h,mm,cpp}",
   "exclude_files": "RCTAppDependencyProvider.{h,mm}",
   "pod_target_xcconfig": {
-    "HEADER_SEARCH_PATHS": [
-      "\"$(PODS_ROOT)/ReactNativeDependencies\"",
-      "\"${PODS_ROOT}/Headers/Public/ReactCodegen/react/renderer/components\"",
-      "\"$(PODS_ROOT)/Headers/Private/React-Fabric\"",
-      "\"$(PODS_ROOT)/Headers/Private/React-RCTFabric\"",
-      "\"$(PODS_ROOT)/Headers/Private/Yoga\"",
-      "\"$(PODS_TARGET_SRCROOT)\"",
-      "$(PODS_ROOT)/glog",
-      "$(PODS_ROOT)/boost",
-      "$(PODS_ROOT)/DoubleConversion",
-      "$(PODS_ROOT)/fast_float/include",
-      "$(PODS_ROOT)/fmt/include",
-      "$(PODS_ROOT)/SocketRocket",
-      "$(PODS_ROOT)/RCT-Folly"
-    ],
+    "HEADER_SEARCH_PATHS": "\"$(PODS_ROOT)/boost\" \"$(PODS_ROOT)/RCT-Folly\" \"$(PODS_ROOT)/DoubleConversion\" \"$(PODS_ROOT)/fast_float/include\" \"$(PODS_ROOT)/fmt/include\" \"${PODS_ROOT}/Headers/Public/ReactCodegen/react/renderer/components\" \"$(PODS_ROOT)/Headers/Private/React-Fabric\" \"$(PODS_ROOT)/Headers/Private/React-RCTFabric\" \"$(PODS_ROOT)/Headers/Private/Yoga\" \"$(PODS_TARGET_SRCROOT)\"",
     "FRAMEWORK_SEARCH_PATHS": [],
-    "OTHER_CPLUSPLUSFLAGS": "$(inherited) -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1 -Wno-comma -Wno-shorten-64-to-32 -Wno-documentation"
+    "OTHER_CPLUSPLUSFLAGS": "$(inherited) -DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1 -Wno-comma -Wno-shorten-64-to-32 -Wno-documentation"
   },
   "dependencies": {
     "React-jsiexecutor": [],
+    "RCT-Folly": [],
     "RCTRequired": [],
     "RCTTypeSafety": [],
     "React-Core": [],
@@ -43,6 +30,8 @@
     "ReactCommon/turbomodule/bridging": [],
     "ReactCommon/turbomodule/core": [],
     "React-NativeModulesApple": [],
+    "glog": [],
+    "DoubleConversion": [],
     "React-graphics": [],
     "React-rendererdebug": [],
     "React-Fabric": [],
@@ -52,14 +41,7 @@
     "React-featureflags": [],
     "React-RCTAppDelegate": [],
     "hermes-engine": [],
-    "glog": [],
-    "boost": [],
-    "DoubleConversion": [],
-    "fast_float": [],
-    "fmt": [],
-    "RCT-Folly": [],
-    "SocketRocket": [],
-    "RCT-Folly/Fabric": []
+    "React-hermes": []
   },
   "script_phases": {
     "name": "Generate Specs",

@@ -1,4 +1,4 @@
-import type { EventEnvelope, BusMode } from './types';
+import type { BusMode, EventEnvelope } from './types';
 import { nowIso } from './types';
 
 export const streamKey = (name: string) => `events:${name}`;
@@ -39,47 +39,47 @@ export function ensureStreamLoop(opts: {
   const consumer = `${serviceName}-${process.pid}-${Math.random().toString(16).slice(2)}`;
   const run = async () => {
     console.log(`🌀 Starting stream loop for ${name}:${group} with consumer ${consumer}`);
-    
+
     while (getActive() && (getMode() === 'redis-streams' || getMode() === 'hybrid')) {
       if (!streamLoops.get(loopKey)) {
         console.log(`🛑 Stream loop stopped for ${name}:${group}`);
         break;
       }
-      
+
       try {
         const res = await redis.xReadGroup(group, consumer, [{ key, id: '>' }], { COUNT: 10, BLOCK: 2000 });
-        
+
         if (!res || res.length === 0) continue;
-        
+
         for (const stream of res) {
           if (!stream.messages || stream.messages.length === 0) continue;
-          
+
           for (const msg of stream.messages) {
             const messageId = msg.id;
-            
+
             try {
               // Parse message envelope
               const envStr = msg.message?.envelope ?? msg.message?.data ?? JSON.stringify(msg.message);
               if (!envStr) {
                 throw new Error('Empty message envelope');
               }
-              
+
               const envelope: EventEnvelope = typeof envStr === 'string' ? JSON.parse(envStr) : envStr;
-              
+
               // Validate envelope structure
               if (!envelope.name || !envelope.meta) {
                 throw new Error('Invalid envelope structure');
               }
-              
+
               // Dispatch and acknowledge
               await dispatch(envelope, group);
               await redis.xAck(key, group, messageId);
-              
+
               console.debug(`✅ Processed stream message: ${name}:${group}:${messageId}`);
-              
+
             } catch (err) {
               console.error(`❌ Stream message processing failed for ${name}:${group}:${messageId}:`, err);
-              
+
               try {
                 // Move to dead letter queue with detailed error info
                 await redis.xAdd(dlqKey(name), '*', {
@@ -98,10 +98,10 @@ export function ensureStreamLoop(opts: {
               } catch (dlqErr) {
                 console.error(`❌ Failed to move message to DLQ:`, dlqErr);
               }
-              
+
               // Always acknowledge to prevent reprocessing
-              try { 
-                await redis.xAck(key, group, messageId); 
+              try {
+                await redis.xAck(key, group, messageId);
                 console.debug(`✅ Acknowledged failed message: ${messageId}`);
               } catch (ackErr) {
                 console.error(`❌ Failed to acknowledge message ${messageId}:`, ackErr);
@@ -115,7 +115,7 @@ export function ensureStreamLoop(opts: {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
-    
+
     console.log(`🏁 Stream loop ended for ${name}:${group}`);
   };
   void run();

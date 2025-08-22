@@ -1,4 +1,51 @@
 {
-  "name": "MetropolitanApp",
-  "displayName": "MetropolitanApp"
+  "expo": {
+    "name": "metropolitan",
+    "slug": "metropolitan",
+    "version": "1.0.2",
+    "orientation": "portrait",
+    "icon": "./assets/images/icooon.png",
+    "scheme": "metropolitan",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "locales": {
+      "tr": "./locales/native/tr.json",
+      "pl": "./locales/native/pl.json",
+      "en": "./locales/native/en.json"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.metropolitan.food",
+      "buildNumber": "3",
+      "googleServicesFile": "../../firabase/GoogleService-Info.plist",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "CFBundleLocalizations": ["tr", "en", "pl"]
+      },
+      "appleTeamId": "64XKK46655"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.metropolitan.food",
+      "permissions": ["android.permission.RECORD_AUDIO"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-web-browser",
+      "expo-font",
+      "expo-localization",
+      "expo-image-picker",
+      "@react-native-firebase/app"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
 }

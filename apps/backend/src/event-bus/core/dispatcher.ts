@@ -1,5 +1,5 @@
-import type { EventEnvelope, EventHandler, Middleware, SubscribeOptions } from '../types';
 import { composeMiddlewares } from '../middleware';
+import type { EventEnvelope, EventHandler, Middleware, SubscribeOptions } from '../types';
 import type { EventSubscriber } from './subscriber';
 
 export class EventDispatcher {
@@ -13,8 +13,8 @@ export class EventDispatcher {
 
   async dispatch(envelope: EventEnvelope, groupFilter?: string): Promise<void> {
     const handlers = this.subscriber.getHandlers(envelope.name);
-    const filteredHandlers = groupFilter 
-      ? handlers.filter(x => (x.options.group ?? 'default') === groupFilter) 
+    const filteredHandlers = groupFilter
+      ? handlers.filter(x => (x.options.group ?? 'default') === groupFilter)
       : handlers;
 
     if (filteredHandlers.length === 0) {
@@ -64,8 +64,8 @@ export class EventDispatcher {
   }
 
   private async runWithRetry(
-    evt: EventEnvelope, 
-    handler: EventHandler, 
+    evt: EventEnvelope,
+    handler: EventHandler,
     options?: SubscribeOptions
   ): Promise<void> {
     const retry = options?.retry;
@@ -76,15 +76,15 @@ export class EventDispatcher {
       try {
         attempt += 1;
         await handler(evt);
-        
+
         if (attempt > 1) {
           console.log(`✅ Event handler succeeded after ${attempt} attempts: ${evt.name}`);
         }
         return;
-        
+
       } catch (err) {
         const isLastAttempt = attempt >= maxAttempts;
-        
+
         if (isLastAttempt) {
           await this.handleDeadLetter(evt, err, retry?.deadLetter);
           return;
@@ -103,8 +103,8 @@ export class EventDispatcher {
   }
 
   private async handleDeadLetter(
-    evt: EventEnvelope, 
-    error: unknown, 
+    evt: EventEnvelope,
+    error: unknown,
     deadLetterHandler?: (evt: EventEnvelope, err: unknown) => Promise<void> | void
   ): Promise<void> {
     console.error(`💀 Event moved to dead letter queue: ${evt.name}`, {
