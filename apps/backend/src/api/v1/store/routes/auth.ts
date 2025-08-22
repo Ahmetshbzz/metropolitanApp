@@ -59,26 +59,43 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
   // Corporate registration
   .post('/corporate/register', async ({ body }: any) => {
-    const { phone, companyName, taxNumber } = body;
+    const { phone, email, firstName, lastName, nip, taxNumber } = body;
 
-    if (!phone || !companyName) {
-      return apiResponse({ error: 'phone and companyName required' }, { status: 400 });
+    if (!phone || !email || !firstName || !lastName || !nip) {
+      return apiResponse({ error: 'phone, email, firstName, lastName, and nip are required' }, { status: 400 });
     }
 
-    const result = await auth.corporate.register({ phone, companyName, taxNumber });
-    return apiResponse(result);
+    try {
+      const result = await auth.corporate.register({
+        phone,
+        email,
+        firstName,
+        lastName,
+        nip,
+        taxNumber
+      });
+      return apiResponse(result);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      return apiResponse({ error: errorMessage }, { status: 400 });
+    }
   })
 
-  // Individual registration (phone)
+  // Individual registration
   .post('/individual/register', async ({ body }: any) => {
-    const { phone, firstName, lastName } = body;
+    const { phone, email, firstName, lastName } = body;
 
-    if (!phone) {
-      return apiResponse({ error: 'phone required' }, { status: 400 });
+    if (!phone || !email || !firstName || !lastName) {
+      return apiResponse({ error: 'phone, email, firstName, and lastName are required' }, { status: 400 });
     }
 
-    const result = await auth.individual.registerWithPhone(phone, firstName, lastName);
-    return apiResponse(result);
+    try {
+      const result = await auth.individual.registerWithPhone(phone, firstName, lastName, email);
+      return apiResponse(result);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      return apiResponse({ error: errorMessage }, { status: 400 });
+    }
   })
 
   // Send OTP

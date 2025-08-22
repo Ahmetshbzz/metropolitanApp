@@ -28,6 +28,17 @@ export const users = pgTable('users', {
   // Corporate specific
   companyName: varchar('company_name', { length: 255 }),
   taxNumber: varchar('tax_number', { length: 50 }),
+  nip: varchar('nip', { length: 20 }), // Polish tax ID
+
+  // Address (from GUS API for corporate, manual for individual)
+  address: varchar('address', { length: 500 }),
+  city: varchar('city', { length: 100 }),
+  postalCode: varchar('postal_code', { length: 20 }),
+  country: varchar('country', { length: 100 }).default('Poland'),
+
+  // Corporate validation
+  isCompanyVerified: boolean('is_company_verified').default(false),
+  companyStatus: varchar('company_status', { length: 50 }), // active, inactive
 
   // Status
   isActive: boolean('is_active').default(true).notNull(),

@@ -12,15 +12,19 @@ export enum AuthProvider {
 
 export interface RegisterCorporateRequest {
   phone: string;
-  companyName: string;
-  taxNumber?: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  nip: string; // Polish tax ID - required
+  companyName?: string; // Will be fetched from GUS
+  taxNumber?: string; // Legacy field
 }
 
 export interface RegisterIndividualRequest {
-  phone?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
+  phone: string; // Required
+  email: string; // Required
+  firstName: string; // Required
+  lastName: string; // Required
   provider: AuthProvider;
   socialToken?: string; // Apple/Google/Facebook token
 }
@@ -38,8 +42,23 @@ export interface User {
   email?: string;
   firstName?: string;
   lastName?: string;
+
+  // Corporate specific
   companyName?: string;
   taxNumber?: string;
+  nip?: string; // Polish tax ID
+
+  // Address (from GUS for corporate, manual for individual)
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+
+  // Corporate validation
+  isCompanyVerified?: boolean;
+  companyStatus?: string; // active, inactive
+
+  // Status
   isActive: boolean;
   isPhoneVerified: boolean;
   isEmailVerified: boolean;

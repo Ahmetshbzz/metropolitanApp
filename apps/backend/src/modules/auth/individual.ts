@@ -13,35 +13,35 @@ export class IndividualAuthService {
     return user || null;
   }
 
-  async registerWithPhone(phone: string, firstName?: string, lastName?: string): Promise<{ userId: string; requiresOTP: boolean }> {
-    // Check existing
-    const existing = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
-    if (existing.length > 0) {
+  async registerWithPhone(phone: string, firstName: string, lastName: string, email: string): Promise<{ userId: string; requiresOTP: boolean }> {
+    // Validate required fields
+    if (!firstName || !lastName || !email) {
+      throw new Error('firstName, lastName, and email are required for individual registration');
+    }
+
+    // Check existing phone
+    const existingPhone = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
+    if (existingPhone.length > 0) {
       throw new Error('Phone number already registered');
     }
 
-    // Auth0 user
-    const auth0User = await auth0Service.createIndividualUser({
-      phone,
-      firstName,
-      lastName,
-      provider: 'phone_otp'
-    });
+    // Check existing email
+    const existingEmail = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (existingEmail.length > 0) {
+      throw new Error('Email already registered');
+    }
 
-    // Local user
+    // Create local user (Auth0 only used for SMS OTP)
     const [newUser] = await db.insert(users).values({
       userType: 'individual',
       phone,
+      email,
       firstName,
       lastName,
       isPhoneVerified: false,
     }).returning();
 
-    await db.insert(authProviders).values({
-      userId: newUser.id,
-      auth0UserId: auth0User.user_id!,
-      provider: 'phone_otp',
-    });
+    // No Auth0 user creation needed - only SMS OTP
 
     await otpService.send(phone, 'registration');
 

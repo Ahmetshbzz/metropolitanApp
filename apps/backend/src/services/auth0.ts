@@ -37,11 +37,13 @@ export class Auth0Service {
       },
       body: JSON.stringify({
         connection: 'Username-Password-Authentication',
-        phone_number: phone,
+        email: `${phone.replace('+', '')}@corporate.temp`, // Temporary email
+        name: companyName,
         user_metadata: {
           user_type: 'corporate',
           company_name: companyName,
-          tax_number: taxNumber
+          tax_number: taxNumber,
+          phone: phone // Phone in metadata
         },
         app_metadata: {
           user_type: 'corporate'
@@ -68,12 +70,15 @@ export class Auth0Service {
       },
       body: JSON.stringify({
         connection: 'Username-Password-Authentication',
-        phone_number: data.phone,
         email: data.email,
-        name: data.fullName,
+        name: `${data.firstName} ${data.lastName}`,
+        given_name: data.firstName,
+        family_name: data.lastName,
         user_metadata: {
           user_type: 'individual',
-          full_name: data.fullName
+          first_name: data.firstName,
+          last_name: data.lastName,
+          phone: data.phone // Phone in metadata instead of root
         },
         app_metadata: {
           user_type: 'individual'
@@ -82,10 +87,12 @@ export class Auth0Service {
     });
 
     if (!response.ok) {
-      throw new Error(`Auth0 user creation failed: ${response.statusText}`);
+      const error = await response.text();
+      console.error('Auth0 individual user creation error:', error);
+      throw new Error(`Auth0 user creation failed: ${response.statusText} - ${error}`);
     }
 
-    console.log(`👤 Individual user created: ${data.fullName} - ${data.phone}`);
+    console.log(`👤 Individual user created: ${data.firstName} ${data.lastName} - ${data.phone}`);
     return await response.json();
   }
 
