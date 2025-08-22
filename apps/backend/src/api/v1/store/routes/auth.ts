@@ -12,7 +12,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     }
 
     const existingUser = await auth.corporate.findByPhone(phone);
-    
+
     if (existingUser) {
       // Kayıtlı - OTP gönder ve giriş yap
       await auth.otp.send(phone, 'login');
@@ -30,7 +30,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     });
   })
 
-  // Individual phone check - kayıtlı mı kontrol et  
+  // Individual phone check - kayıtlı mı kontrol et
   .post('/individual/check-phone', async ({ body }: any) => {
     const { phone } = body;
 
@@ -39,13 +39,13 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     }
 
     const existingUser = await auth.individual.findByPhone(phone);
-    
+
     if (existingUser) {
       // Kayıtlı - OTP gönder ve giriş yap
       await auth.otp.send(phone, 'login');
       return apiResponse({
         exists: true,
-        message: 'OTP sent for login', 
+        message: 'OTP sent for login',
         userId: existingUser.id
       });
     }
