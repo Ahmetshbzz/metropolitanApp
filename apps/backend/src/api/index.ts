@@ -1,8 +1,8 @@
 import { swagger } from '@elysiajs/swagger';
 import { Elysia } from 'elysia';
 import { adminGraphQL, storeGraphQL } from './graphql';
-import { apiResponse, getApiVersion } from './middleware/versioning';
 import { requireAdminAuth } from './middleware/auth';
+import { apiResponse, getApiVersion } from './middleware/versioning';
 import { apiV1 } from './v1';
 
 // Main API router combining REST and GraphQL
