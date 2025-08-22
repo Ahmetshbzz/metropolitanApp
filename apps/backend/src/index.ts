@@ -2,6 +2,8 @@ import { spawnSync } from "child_process";
 import 'dotenv/config';
 import { Elysia } from "elysia";
 
+import { api } from "./api";
+import { apiResponse } from "./api/middleware/versioning";
 import { initializeServices } from "./init";
 
 // Get git commit hash dynamically
@@ -32,8 +34,23 @@ const app = new Elysia()
     const endTime = process.hrtime.bigint();
     const responseTime = (Number(endTime - startTime) / 1000000).toFixed(15); // Convert to milliseconds with precision
 
-    return `Welcome to Metropolitan. From ${process.env.API_VERSION || '0.305.6818'}-${branch}-${commitHash} (${process.env.INSTANCE_ID || 'local'}) in ${responseTime}ms.`;
+    return apiResponse({
+      message: `Welcome to Metropolitan Backend`,
+      version: `${process.env.API_VERSION || '0.305.6818'}-${branch}-${commitHash}`,
+      instance: process.env.INSTANCE_ID || 'local',
+      responseTime: `${responseTime}ms`,
+      endpoints: {
+        rest: process.env.API_PREFIX || '/api/v1',
+        graphql: {
+          store: '/graphql/store',
+          admin: '/graphql/admin'
+        },
+        health: '/health',
+        docs: '/swagger'
+      }
+    });
   })
+  .use(api)  // Mount all API routes
   .listen(process.env.PORT || 3000);
 
 // Initialize services and start server
